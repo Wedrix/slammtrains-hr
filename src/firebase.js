@@ -7,9 +7,9 @@ const firebaseConfig = {
     projectId: "slammtrains-2d580",
     storageBucket: "slammtrains-2d580.appspot.com",
     messagingSenderId: "568409436120",
-    appId: "1:568409436120:web:b88f34c976b0c7e638ccad",
-    measurementId: "G-D9NHRBCGW1"
-};
+    appId: "1:568409436120:web:7f917d68461d838a38ccad",
+    measurementId: "G-SKG5WF4S01"
+  };
 
 firebase.initializeApp(firebaseConfig);
 
