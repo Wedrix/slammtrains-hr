@@ -1,28 +1,22 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-export default functions.https.onCall(async (data, context) => {
+export default async (uid:string, company:any) => {
     try {
-        // Get Authenticated User
-        const auth = context.auth;
-
-        if (!auth) {
-            throw new functions.https.HttpsError('permission-denied', 'You are not authorized to call this function');
-        }
-
-        const user = await admin.auth().getUser(auth.uid);
+        const user = await admin.auth().getUser(uid);
 
         // Register User
         await admin.firestore().collection('companies').add({
-            ...data,
+            ...company,
             admin: {
                 name: user.displayName,
                 email: user.email,
                 uid: user.uid,
             },
             subscription: {
-                plan: admin.firestore().doc(`plans/${data.subscription.planId}`),
-            }
+                plan: admin.firestore().doc(`plans/${company.subscription.planId}`),
+            },
+            employeesTotalCount: 0,
         });
 
         // Send Welcome Email
@@ -45,4 +39,4 @@ export default functions.https.onCall(async (data, context) => {
     }
 
     return Promise.resolve();
-});
+};

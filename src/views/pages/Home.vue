@@ -1,9 +1,9 @@
 <template>
-    <v-sheet color="primary" class="textured-background">
+    <v-sheet color="background" class="textured-background">
         <v-container fluid>
             <v-row align="center" justify="center" style="min-height:60vh">
                 <v-col cols="12" sm="6" md="6" offset-md="1" align-self="center">
-                    <div class="text-h3 font-weight-black white--text">
+                    <div class="text-h4 text-md-h3 font-weight-black white--text">
                         TRAIN YOUR EMPLOYEES IN
                         <div class="d-inline-block">COMPUTER SECURITY</div>
                     </div>

@@ -41,7 +41,7 @@
                     </v-card-actions>
                 </v-card>
             </v-form>
-            <v-sheet dark color="transparent" class="pa-6">
+            <v-sheet dark color="transparent" class="py-6">
                 <p class="text-center">Don't have an account yet? <router-link class="accent2--text" to="/signup">SIGN UP HERE</router-link></p>
             </v-sheet>
         </v-col>

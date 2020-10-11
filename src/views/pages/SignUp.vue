@@ -18,9 +18,9 @@
                                 {{ alert.message }}
                         </v-alert>
 
-                        <v-text-field v-model="fullName"
+                        <v-text-field v-model="name"
                             label="Full Name"
-                            name="fullName"
+                            name="name"
                             prepend-icon="mdi-account-circle"
                             type="text"
                             :rules="[required]"
@@ -77,7 +77,7 @@
                     </v-card-actions>
                 </v-card>
             </v-form>
-            <v-sheet dark color="transparent" class="pa-6">
+            <v-sheet dark color="transparent" class="py-6">
                 <p class="text-center">Already have an account? <router-link class="accent2--text" to="/signin">SIGN IN HERE</router-link></p>
             </v-sheet>
         </v-col>
@@ -103,7 +103,7 @@
                     formatted: null,
                 },
                 password: null,
-                fullName: null,
+                name: null,
                 alert: {
                     message: null,
                     show: false,
@@ -123,7 +123,7 @@
                         email: this.email,
                         phoneNumber: this.phoneNumber.formatted,
                         password: this.password,
-                        displayName: this.fullName,
+                        displayName: this.name,
                     });
 
                     await firebase.auth().signInWithEmailAndPassword(this.email, this.password);

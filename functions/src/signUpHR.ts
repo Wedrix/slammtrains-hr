@@ -1,10 +1,18 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-export default functions.https.onCall(async data => {
+export default async (HR:any) => {
     try {
         // Create User
-        const user = await admin.auth().createUser({ ...data });
+        const user = await admin.auth()
+                                .createUser({ ...HR })
+                                .catch(error => {
+                                    if (error.code === 'auth/email-already-exists') {
+                                        throw new functions.https.HttpsError('failed-precondition', error.message);
+                                    }
+    
+                                    throw error;
+                                });;
 
         // Set Claims 
         await admin.auth().setCustomUserClaims(user.uid, { accessLevel: 'hr' }).catch(error => {
@@ -31,4 +39,4 @@ export default functions.https.onCall(async data => {
     }
 
     return Promise.resolve();
-});
+};

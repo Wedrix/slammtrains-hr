@@ -5,7 +5,7 @@ const now = () => {
     return new Date().getTime();
 };
 
-export default functions.https.onCall(async (data, context) => {
+export default async () => {
     try {
         // Create User
         const user = await admin.auth().createUser({
@@ -54,4 +54,4 @@ export default functions.https.onCall(async (data, context) => {
     }
 
     return Promise.resolve();
-});
+};

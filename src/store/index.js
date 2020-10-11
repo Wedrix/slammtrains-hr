@@ -4,6 +4,8 @@ import Vuex from 'vuex';
 import firebase from '@/firebase';
 import 'firebase/firestore';
 
+import { vuexfireMutations, firestoreAction } from 'vuexfire';
+
 Vue.use(Vuex);
 
 const init = {
@@ -18,7 +20,11 @@ const init = {
       src: '',
     },
     name: '',
-    subscription: null,
+    subscription: {
+      plan: {
+        name: '',
+      }
+    },
   },
 };
 
@@ -27,34 +33,40 @@ export default new Vuex.Store({
   getters: {
     admin(state) {
       return state.company.admin;
-    }
+    },
+    subscription(state) {
+      return state.company.subscription;
+    },
   },
   mutations: {
+    ...vuexfireMutations,
     push_notification({ notifications }, { notification }) {
       notifications.splice(notifications.length, 1, notification);
     },
     pop_notification({ notifications }) {
       notifications.splice(0, 1);
     },
-    set_company(state, { company }) {
-      state.company = company;
-    },
     clear_state(state) {
       state = Object.assign(state, { ...init });
     }
   },
   actions: {
-    initialize({ commit }, { uid }) {
-      firebase.firestore()
-              .collection('companies')
-              .where('admin.uid','==',uid)
-              .onSnapshot(snapshot => {
-                const document = snapshot.docs[0];
-                const company = document.data();
+    initialize: firestoreAction(async ({ bindFirestoreRef }, { uid }) => {
+      const companyId = (await firebase.firestore()
+                                    .collection('companies')
+                                    .where('admin.uid','==',uid)
+                                    .get()
+                                    .then(companiesSnapshot => {
+                                      const companySnapshot = companiesSnapshot.docs[0];
 
-                commit('set_company', { company });
-              });
-    },
+                                      return companySnapshot.id;
+                                    }));
+
+      const companyRef = firebase.firestore()
+                                .doc(`companies/${companyId}`);
+
+      return bindFirestoreRef('company', companyRef, { wait: true });
+    }),
     clear({ commit }) {
       commit('clear_state');
     }

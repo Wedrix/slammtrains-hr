@@ -93,6 +93,26 @@ const dashboardRoutes = [
     name: 'Home',
     component: () => import('../views/pages/Dashboard/Home.vue')
   },
+  {
+    path: 'employees',
+    name: 'Employees',
+    component: () => import('../views/pages/Dashboard/Employees.vue')
+  },
+  {
+    path: 'courses',
+    name: 'Courses',
+    component: () => import('../views/pages/Dashboard/Courses.vue')
+  },
+  {
+    path: 'payments',
+    name: 'Payments',
+    component: () => import('../views/pages/Dashboard/Payments.vue')
+  },
+  {
+    path: 'subscription',
+    name: 'Subscription',
+    component: () => import('../views/pages/Dashboard/Subscription.vue')
+  }
 ];
 
 const dashboardValidation = (to, from, next) => {

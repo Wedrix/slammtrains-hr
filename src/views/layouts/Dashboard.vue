@@ -1,77 +1,79 @@
 <template>
     <v-app>
-        <v-navigation-drawer app :mini-variant.sync="isShowingNavDrawer">
-            <v-list>
-                <v-list-item class="px-2">
-                    <v-list-item-avatar tile>
-                        <v-img v-if="company.logo" :src="company.logo.src"></v-img>
-                        <v-btn v-else fab :elevation="0" small>
-                            {{ getInitials(company.name) }}
-                        </v-btn>
-                    </v-list-item-avatar>
-
-                    <v-list-item-title>{{ company.name }}</v-list-item-title>
-
-                    <v-btn icon>
-                        <v-icon>mdi-circle-edit-outline</v-icon>
-                    </v-btn>
-                </v-list-item>
-
-                <v-divider/>
-
-                <v-list-item v-for="navItem in navItems" :key="navItem.title" link>
-                    <v-list-item-icon>
-                        <v-icon>{{ navItem.icon }}</v-icon>
-                    </v-list-item-icon>
-
-                    <v-list-item-content>
-                        <v-list-item-title>{{ navItem.title }}</v-list-item-title>
-                    </v-list-item-content>
-                </v-list-item>
-
-                <v-divider/>
-
-                <v-list-item link>
-                    <v-list-item-icon>
-                        <v-icon>mdi-wallet-outline</v-icon>
-                    </v-list-item-icon>
-
-                    <v-list-item-content>
-                        <v-list-item-title>Subscription</v-list-item-title>
-                    </v-list-item-content>
-                </v-list-item>
-            </v-list>
-
-            <template v-slot:append>
+        <v-navigation-drawer 
+            v-model="isShowingNavDrawer"
+            app>
                 <v-list>
-                    <v-divider/>
-                    
-                    <v-list-item @click="logout()">
-                        <v-list-item-icon>
-                            <v-icon>mdi-logout</v-icon>
-                        </v-list-item-icon>
+                    <v-list-item class="px-2">
+                        <v-list-item-avatar tile>
+                            <v-img v-if="company.logo" :src="company.logo.src"></v-img>
+                            <v-btn v-else fab :elevation="0" small>
+                                {{ getInitials(company.name) }}
+                            </v-btn>
+                        </v-list-item-avatar>
 
-                        <v-list-item-content>
-                            <v-list-item-title>LOGOUT</v-list-item-title>
-                        </v-list-item-content>
+                        <v-list-item-title>{{ company.name }}</v-list-item-title>
+
+                        <v-btn icon>
+                            <v-icon>mdi-square-edit-outline</v-icon>
+                        </v-btn>
+                    </v-list-item>
+
+                    <v-divider/>
+
+                    <v-list-item 
+                        v-for="navItem in navItems" 
+                        :key="navItem.title" 
+                        :to="navItem.to"
+                        color="primary"
+                        link
+                        exact>
+                            <v-list-item-icon>
+                                <v-icon>{{ navItem.icon }}</v-icon>
+                            </v-list-item-icon>
+
+                            <v-list-item-content>
+                                <v-list-item-title>{{ navItem.title }}</v-list-item-title>
+                            </v-list-item-content>
+                    </v-list-item>
+
+                    <v-divider/>
+
+                    <v-list-item 
+                        to="/dashboard/subscription"
+                        color="primary"
+                        link 
+                        exact>
+                            <v-list-item-icon>
+                                <v-icon>mdi-wallet-outline</v-icon>
+                            </v-list-item-icon>
+
+                            <v-list-item-content>
+                                <v-list-item-title>Subscription</v-list-item-title>
+                            </v-list-item-content>
                     </v-list-item>
                 </v-list>
-            </template>
+
+                <template v-slot:append>
+                    <v-list>
+                        <v-divider/>
+                        
+                        <v-list-item @click="logout()">
+                            <v-list-item-icon>
+                                <v-icon>mdi-logout</v-icon>
+                            </v-list-item-icon>
+
+                            <v-list-item-content>
+                                <v-list-item-title>LOGOUT</v-list-item-title>
+                            </v-list-item-content>
+                        </v-list-item>
+                    </v-list>
+                </template>
         </v-navigation-drawer>
 
-        <v-app-bar app dark color="primary" class="textured-background" elevate-on-scroll>
-            <v-app-bar-nav-icon @click="isShowingNavDrawer = !isShowingNavDrawer"/>
-
-            <v-toolbar-title class="mr-12">Home</v-toolbar-title>
-            
-            <v-text-field
-                flat
-                solo-inverted
-                hide-details
-                prepend-inner-icon="mdi-magnify"
-                label="Search"
-                class="hidden-sm-and-down">
-            </v-text-field>
+        <v-app-bar app dark color="background" class="textured-background" elevate-on-scroll>
+            <v-app-bar-nav-icon class="mr-6" :class="{ 'd-none': isShowingNavDrawer }"
+                @click="isShowingNavDrawer = !isShowingNavDrawer"/>
 
             <v-spacer/>
 
@@ -108,20 +110,32 @@
             </v-menu>
         </v-app-bar>
 
-        <v-main>
+        <v-main class="plain-background">
             <v-container fluid>
+                <v-alert :value="hasDueBill"
+                    dismissible
+                    color="secondary"
+                    border="left"
+                    elevation="2"
+                    class="mx-lg-6"
+                    colored-border>
+                        Your current plan is inactive. Kindly make payment or pick another plan.
+                        <v-btn color="secondary" class="ml-4">Make Payment</v-btn>
+                </v-alert>
+
                 <router-view/>
             </v-container>
             <notification/>
         </v-main>
 
-        <v-footer class="textured-background" color="primary" dark inset app>
+        <v-footer class="textured-background" color="background" dark inset app>
             <div class="text-caption">&#169;2020 Slamm Technologies</div>
         </v-footer>
     </v-app>
 </template>
 
 <script>
+    import moment from 'moment';
     import firebase from '@/firebase';
     import 'firebase/auth';
 
@@ -158,7 +172,9 @@
                         to: '/dashboard/payments',
                     },
                 ],
-                isShowingNavDrawer: false,
+                
+                hasDueBill: false,
+                isShowingNavDrawer: null,
             };
         },
         computed: {
@@ -167,7 +183,25 @@
             ]),
             ...mapGetters([
                 'admin',
+                'subscription',
             ]),
+        },
+        watch: {
+            subscription(subscription) {
+                if (subscription) {
+                    if (subscription.plan.isFree) {
+                        this.hasDueBill = false;
+                    }
+
+                    if (subscription.expiresAt) {
+                        const expiresAt = moment(subscription.expiresAt.toMillis());
+
+                        this.hasDueBill = moment().isAfter(expiresAt);
+                    }
+                } else {
+                    this.hasDueBill = true;
+                }
+            }
         },
         methods: {
             async logout() {
@@ -207,3 +241,13 @@
         }
     }
 </script>
+
+<style lang="scss">
+    .textured-background {
+        background-image: url('../../assets/background.png');
+        background-repeat: repeat;
+    }
+    .plain-background {
+        background-color: #32527910 !important;
+    }
+</style>

@@ -126,7 +126,7 @@
                         </v-col>
                         <v-col cols="12" sm="6">
                             <v-card-text>
-                                <div class="primary--text text-h5 text-capitalize py-2">{{ selectedPlan.name }}</div>
+                                <div class="background--text text-h5 text-capitalize py-2">{{ selectedPlan.name }}</div>
 
                                 <v-divider/>
 
