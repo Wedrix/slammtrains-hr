@@ -18,21 +18,24 @@
         <v-sheet color="transparent">
             <v-row>
                 <v-col cols="12" md="3">
-                    <v-card light
-                        class="elevation-4 pa-4"
+                    <v-card 
+                        light
+                        outlined
+                        elevation="2"
+                        class="pa-4"
                         color="white">
                             <div>
                                 <div class="text-h6">{{ subscription.plan.name }}:</div>
                                 <div class="text-caption pb-2">
-                                    <strong>{{ subscription.plan.courses.length }}</strong> available courses
+                                    <strong>{{ subscription.plan.courses.length }}</strong> licensed courses
                                 </div>
                                 <v-divider/>
                                 <v-list two-line light color="transparent">
                                     <template 
                                         v-for="(course, index) in subscription.plan.courses">
                                             <v-list-item :key="course.id">
-                                                <v-list-item-avatar>
-                                                    <v-img :src="course.thumbnail.src"></v-img>
+                                                <v-list-item-avatar v-if="course.thumbnail">
+                                                    <v-img :src="course.thumbnail.src"/>
                                                 </v-list-item-avatar>
 
                                                 <v-list-item-content>
@@ -57,14 +60,12 @@
                                 </v-list>
                             </div>
                             <v-btn class="mt-4" color="secondary" block>Upgrade Plan</v-btn>
-                        </v-card>
+                    </v-card>
                 </v-col>
-                <v-col cols="12" md="9">  
-                    <v-toolbar 
-                        dark
-                        extended
-                        rounded
-                        color="primary">  
+                <v-col cols="12" md="9">    
+                    <v-sheet dark
+                        color="primary"
+                        class="pa-2 elevation-4 rounded-t">  
                             <v-row no-gutters>
                                 <v-col cols="12" sm="3">
                                     <v-select v-model="search.field"
@@ -84,14 +85,19 @@
                                     <v-spacer/>
                                 </v-col>
                             </v-row>
-                            <template v-slot:extension>
-                                <v-tabs v-model="tab" dark>
-                                    <v-tab>All Courses</v-tab>
-                                    <v-tab>Workplace Security</v-tab>
-                                    <v-tab>Soft Skills</v-tab>
-                                    <v-tab>Microsoft Suite</v-tab>
-                                </v-tabs>
-                            </template>
+                    </v-sheet>
+                    <v-toolbar 
+                        light
+                        flat
+                        rounded
+                        outlined
+                        height="60">  
+                            <v-tabs v-model="tab">
+                                <v-tab>All Courses</v-tab>
+                                <v-tab>Workplace Security</v-tab>
+                                <v-tab>Soft Skills</v-tab>
+                                <v-tab>Microsoft Suite</v-tab>
+                            </v-tabs>
                     </v-toolbar>
                     <v-data-iterator
                         :items="courses"
@@ -185,7 +191,7 @@
             ...mapGetters([
                 'admin',
                 'subscription',
-            ]),
+            ])
         },
         firestore() {
             return {

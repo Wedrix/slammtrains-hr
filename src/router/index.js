@@ -104,14 +104,9 @@ const dashboardRoutes = [
     component: () => import('../views/pages/Dashboard/Courses.vue')
   },
   {
-    path: 'payments',
-    name: 'Payments',
-    component: () => import('../views/pages/Dashboard/Payments.vue')
-  },
-  {
-    path: 'subscription',
-    name: 'Subscription',
-    component: () => import('../views/pages/Dashboard/Subscription.vue')
+    path: 'settings/billing',
+    name: 'Billing',
+    component: () => import('../views/pages/Dashboard/Billing.vue')
   }
 ];
 

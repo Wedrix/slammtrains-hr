@@ -23,6 +23,7 @@ const init = {
     subscription: {
       plan: {
         name: '',
+        courses: [],
       }
     },
   },

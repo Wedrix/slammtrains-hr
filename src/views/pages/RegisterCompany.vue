@@ -130,7 +130,7 @@
 
                                 <v-divider/>
 
-                                <v-sheet class="pt-1 pb-3 my-2 subtitle-1">
+                                <v-sheet class="pt-1 pb-3 my-2">
                                     <div class="pb-2">
                                         <div class="text-decoration-underline">Courses:</div>
                                         <ul>
@@ -142,13 +142,16 @@
                                     </div>
                                     <div class="pb-1">
                                         <span class="text-decoration-underline">Billing:</span> 
-                                        {{ $$config.currency }} {{ selectedPlan.subscription.fee }} / {{ selectedPlan.subscription.paymentCycleInDays }} Days
+                                        <span v-if="selectedPlan.billing">
+                                            {{ $$config.currency }} {{ selectedPlan.billing.amount / 100 }} {{ selectedPlan.billing.interval }}
+                                        </span>
+                                        <span v-else>Free</span>
                                     </div>
                                 </v-sheet>
 
                                 <v-select v-model="selectedPlan" :items="plans" :item-text="'name'" return-object hide-selected 
                                     label="Select Another Plan"
-                                    name="industry"
+                                    name="plan"
                                     :hint="'NB: You will not be immediately billed. You are free to change your plan anytime.'"
                                     persistent-hint
                                     outlined

@@ -97,7 +97,7 @@
                                 </v-card-text>
                                 <v-card-actions>
                                     <v-spacer/>
-                                    <v-btn color="primary" type="submit" dark :loading="isImportingEmployees" block>Upload & Import</v-btn>
+                                    <v-btn color="primary" type="submit" dark :loading="isImportingEmployees">Upload & Import</v-btn>
                                 </v-card-actions>
                             </v-form>
                         </v-card>
@@ -107,8 +107,11 @@
         <v-sheet color="transparent">
             <v-row>
                 <v-col cols="12" md="3">
-                    <v-card light
-                        class="elevation-4 pa-4"
+                    <v-card
+                        light
+                        outlined
+                        elevation="2"
+                        class="pa-4"
                         color="white">
                             <div>
                                 <div class="text-h6">{{ subscription.plan.name }}:</div>
@@ -163,12 +166,11 @@
                                         <v-btn icon 
                                             v-bind="attrs"
                                             v-on="on"
-                                            color="red" 
-                                            @click="blockEmployee(item)">
-                                                <v-icon small>mdi-block-helper</v-icon>
+                                            color="purple" >
+                                                <v-icon small>mdi-finance</v-icon>
                                         </v-btn>
                                     </template>
-                                    <span>Block</span>
+                                    <span>View Progress</span>
                                 </v-tooltip>
                                 <v-tooltip top>
                                     <template v-slot:activator="{ on, attrs }">
@@ -176,7 +178,8 @@
                                             v-bind="attrs"
                                             v-on="on"
                                             color="red" 
-                                            @click="removeEmployee(item)">
+                                            :loading="isRemovingEmployees[item.id]"
+                                            @click="removeEmployee(item.id)">
                                                 <v-icon small>mdi-close</v-icon>
                                         </v-btn>
                                     </template>
@@ -195,13 +198,12 @@
                                     </v-row>
                                 </div>
                             </template>
-                            <template v-slot:footer v-if="employeesTotalCount !== employees.length">
+                            <template v-slot:footer v-if="(employeesTotalCount !== employees.length) && !isLoadingEmployees">
                                 <div class="table-bottom px-6">
                                     <v-row>
                                         <v-col cols="12">
                                             <div style="display:flex;justify-content:space-around;">
                                                 <v-btn color="primary"
-                                                    :disabled="isLoadingEmployees"
                                                     text
                                                     @click="loadMoreEmployees()">
                                                         Load More ...
@@ -298,6 +300,7 @@
                 sampleCSVFileLink: 'https://firebasestorage.googleapis.com/v0/b/slammtrains-2d580.appspot.com/o/Employees%20Sample.csv?alt=media&token=50c6dafe-d9e6-46ff-af83-1c793b69b95d',
 
                 isLoadingEmployees: false,
+                isRemovingEmployees: {},
             };
         },
         computed: {
@@ -406,12 +409,14 @@
                         unwatch();
 
                         await this.loadEmployees();
-
-                        this.employeesCSVs = [];
-                        this.isImportingEmployees = false;
-                        this.isShowingImportEmployeesForm = false;
                     }
                 });
+
+                this.isLoadingEmployees = true;
+
+                this.employeesCSVs = [];
+                this.isShowingImportEmployeesForm = false;
+                this.isImportingEmployees = false;
             },
             async loadEmployees() {
                 this.isLoadingEmployees = true;
@@ -469,12 +474,28 @@
                     return moment(timestamp).format("MMMM Do, YYYY h:mm a");
                 }
             },
-            removeEmployee(employee) {
-                //
-            },
-            blockEmployee(employee) {
-                //
-            },
+            async removeEmployee(employeeId) {
+                this.$set(this.isRemovingEmployees, employeeId, true);
+
+                try {
+                    const companyId = this.company.id;
+
+                    const removeEmployee = firebase.functions().httpsCallable('removeEmployee');
+
+                    await removeEmployee({ companyId, employeeId });
+
+                    await this.loadEmployees();
+                } catch (error) {
+                    const notification = {
+                        message: error.message,
+                        context: 'error',
+                    };
+
+                    this.$store.commit('push_notification', { notification });
+                }
+
+                this.$set(this.isRemovingEmployees, employeeId, false);
+            }
         }
     };
 </script>

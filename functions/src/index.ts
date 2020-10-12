@@ -10,35 +10,69 @@ import signUpHR from './signUpHR';
 import registerCompany from './registerCompany';
 import addEmployee from './addEmployee';
 import importEmployees from './importEmployees';
+import removeEmployee from './removeEmployee';
 
-exports.seedDatabase = functions.https.onCall(async () => {
-    await seedDatabase();
-});
+interface Auth {
+    uid: string,
+    token: admin.auth.DecodedIdToken,
+};
 
-exports.signUpHR = functions.https.onCall(async data => {
-    const HR = data;
-
-    await signUpHR(HR);
-});
-
-exports.registerCompany = functions.https.onCall(async (data, context) => {
-    const auth = context.auth;
-    const company = data;
-
+const authorizeRequestForHR = async (auth:Auth | undefined) => {
     if (!auth) {
         throw new functions.https.HttpsError('permission-denied', 'You are not authorized to call this function');
     }
 
-    await registerCompany(auth.uid, company);
+    const authUserRecord = await admin.auth().getUser(auth.uid);
+    const customClaims = authUserRecord.customClaims; 
+
+    if (!customClaims) {
+        throw new functions.https.HttpsError('permission-denied', 'You are not authorized to call this function');     
+    }
+
+    if (customClaims.accessLevel !== 'hr') {
+        throw new functions.https.HttpsError('permission-denied', 'You are not authroized to call this function');
+    }
+};
+
+exports.seedDatabase = functions.https.onCall(async () => {
+    try {
+        await seedDatabase();
+    } catch (error) {
+        return Promise.reject(error);
+    }
+
+    return Promise.resolve();
+});
+
+exports.signUpHR = functions.https.onCall(async data => {
+    try {
+        await signUpHR(data);
+    } catch (error) {
+        return Promise.reject(error);
+    }
+
+    return Promise.resolve();
+});
+
+exports.registerCompany = functions.https.onCall(async (data, context) => {
+    try {
+        await authorizeRequestForHR(context.auth);
+        
+        if (context.auth) {
+            const uid = context.auth.uid;
+        
+            await registerCompany(uid, data);
+        }
+    } catch (error) {
+        return Promise.reject(error);
+    }
+
+    return Promise.resolve();
 });
 
 exports.addEmployee = functions.https.onCall(async (data, context) => {
     try {
-        const auth = context.auth;
-    
-        if (!auth) {
-            throw new functions.https.HttpsError('permission-denied', 'You are not authorized to call this function');
-        }
+        await authorizeRequestForHR(context.auth);
     
         const { companyId, employee } = data;
     
@@ -85,6 +119,20 @@ exports.importEmployeesOnCSVUpload = functions.storage.object().onFinalize(async
 
             importEmployees(tempFilePath, companyId);
         }
+    } catch (error) {
+        return Promise.reject(error);
+    }
+
+    return Promise.resolve();
+});
+
+exports.removeEmployee = functions.https.onCall(async (data, context) => {
+    try {
+        await authorizeRequestForHR(context.auth);
+    
+        const { companyId, employeeId } = data;
+    
+        await removeEmployee(companyId, employeeId);
     } catch (error) {
         return Promise.reject(error);
     }

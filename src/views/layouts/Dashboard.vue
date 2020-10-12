@@ -13,10 +13,6 @@
                         </v-list-item-avatar>
 
                         <v-list-item-title>{{ company.name }}</v-list-item-title>
-
-                        <v-btn icon>
-                            <v-icon>mdi-square-edit-outline</v-icon>
-                        </v-btn>
                     </v-list-item>
 
                     <v-divider/>
@@ -39,19 +35,32 @@
 
                     <v-divider/>
 
-                    <v-list-item 
-                        to="/dashboard/subscription"
-                        color="primary"
-                        link 
-                        exact>
-                            <v-list-item-icon>
-                                <v-icon>mdi-wallet-outline</v-icon>
-                            </v-list-item-icon>
+                    <v-list-group
+                        prepend-icon="mdi-cog-outline"
+                        group="/settings/i"
+                        no-action>
+                            <template v-slot:activator>
+                                <v-list-item-title>Settings</v-list-item-title>
+                            </template>
 
-                            <v-list-item-content>
-                                <v-list-item-title>Subscription</v-list-item-title>
-                            </v-list-item-content>
-                    </v-list-item>
+                            <v-divider inset/>
+
+                            <v-list-item 
+                                v-for="navItem in settingsNavItems" 
+                                :key="navItem.title" 
+                                :to="navItem.to"
+                                color="primary"
+                                link
+                                exact>
+                                    <v-list-item-icon>
+                                        <v-icon>{{ navItem.icon }}</v-icon>
+                                    </v-list-item-icon>
+
+                                    <v-list-item-content>
+                                        <v-list-item-title>{{ navItem.title }}</v-list-item-title>
+                                    </v-list-item-content>
+                            </v-list-item>
+                    </v-list-group>
                 </v-list>
 
                 <template v-slot:append>
@@ -71,14 +80,22 @@
                 </template>
         </v-navigation-drawer>
 
-        <v-app-bar app dark color="background" class="textured-background" elevate-on-scroll>
+        <v-app-bar app color="white" flat style="border-bottom: thin solid rgba(0, 0, 0, 0.12) !important">
             <v-app-bar-nav-icon class="mr-6" :class="{ 'd-none': isShowingNavDrawer }"
                 @click="isShowingNavDrawer = !isShowingNavDrawer"/>
+    
+            <v-avatar tile width="145" color="white" size="40">
+                <img src="@/assets/logo.png"/>
+            </v-avatar>
 
             <v-spacer/>
 
             <v-btn icon>
                 <v-icon>mdi-bell</v-icon>
+            </v-btn>
+
+            <v-btn icon>
+                <v-icon>mdi-help-circle</v-icon>
             </v-btn>
 
             <v-menu left bottom>
@@ -128,7 +145,7 @@
             <notification/>
         </v-main>
 
-        <v-footer class="textured-background" color="background" dark inset app>
+        <v-footer app inset color="white" flat style="border-top: thin solid rgba(0, 0, 0, 0.12) !important;">
             <div class="text-caption">&#169;2020 Slamm Technologies</div>
         </v-footer>
     </v-app>
@@ -165,12 +182,20 @@
                         title: 'Courses',
                         icon: 'mdi-book-open-outline',
                         to: '/dashboard/courses',
+                    }
+                ],
+
+                settingsNavItems: [
+                    {
+                        title: 'Account',
+                        icon: 'mdi-account-outline',
+                        to: '',
                     },
                     {
-                        title: 'Payments',
-                        icon: 'mdi-credit-card-outline',
-                        to: '/dashboard/payments',
-                    },
+                        title: 'Billing',
+                        icon: 'mdi-wallet-outline',
+                        to: '/dashboard/settings/billing',
+                    }
                 ],
                 
                 hasDueBill: false,
@@ -189,7 +214,7 @@
         watch: {
             subscription(subscription) {
                 if (subscription) {
-                    if (subscription.plan.isFree) {
+                    if (subscription.plan.billing === undefined) {
                         this.hasDueBill = false;
                     }
 

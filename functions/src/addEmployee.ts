@@ -51,6 +51,7 @@ export default async (companyId:string, employee:any) => {
     await admin.firestore()
             .collection(`companies/${companyId}/employees`)
             .add({ 
+                uid: user.uid,
                 ...employee, 
                 enrolledCourses: [],
                 createdAt: admin.firestore.FieldValue.serverTimestamp() 
