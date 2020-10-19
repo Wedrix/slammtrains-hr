@@ -25,14 +25,14 @@
                         class="pa-4"
                         color="white">
                             <div>
-                                <div class="text-h6">{{ subscription.plan.name }}:</div>
+                                <div class="text-h6">{{ company.plan.name }}:</div>
                                 <div class="text-caption pb-2">
-                                    <strong>{{ subscription.plan.courses.length }}</strong> licensed courses
+                                    <strong>{{ company.plan.courses.length }}</strong> licensed courses
                                 </div>
                                 <v-divider/>
                                 <v-list two-line light color="transparent">
                                     <template 
-                                        v-for="(course, index) in subscription.plan.courses">
+                                        v-for="(course, index) in company.plan.courses">
                                             <v-list-item :key="course.id">
                                                 <v-list-item-avatar v-if="course.thumbnail">
                                                     <v-img :src="course.thumbnail.src"/>
@@ -189,8 +189,7 @@
                 'company',
             ]),
             ...mapGetters([
-                'admin',
-                'subscription',
+                'hr',
             ])
         },
         firestore() {

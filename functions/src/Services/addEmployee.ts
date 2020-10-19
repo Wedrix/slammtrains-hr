@@ -1,36 +1,21 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-export default async (companyId:string, employee:any) => {
-    const company = (await admin.firestore()
-                            .doc(`companies/${companyId}`)
-                            .get())
-                            .data();
+import { EmployeeData } from '../Schema/Data';
+import { resolveCompany } from '../Helpers/ResolveDocuments';
 
-    if (!company) {
-        throw new functions.https.HttpsError('invalid-argument', 'The companyId is invalid.');
-    }
+export default async (employeeData: EmployeeData, companyId: string) => {
+    const company = await resolveCompany(`companies/${companyId}`);
 
-    if (!company.subscription.plan) {
-        throw new functions.https.HttpsError('failed-precondition', 'There is no plan set for the company.');
-    }
-
-    const plan = company.subscription.plan;
-
-    const employeesCount = (await admin.firestore()
-                                    .collection(`companies/${companyId}/employees`)
-                                    .get())
-                                    .size;
-
-    if (plan && plan.licensedNumberOfEmployees >= employeesCount) {
+    if (company.plan.licensedNumberOfEmployees <= company.employeesTotalCount) {
         throw new functions.https.HttpsError('failed-precondition', 'You have exceeded the allowed number of emplyees for your plan.');
     }
 
     // Create User
     const user = await admin.auth()
                         .createUser({
-                            email: employee.email,
-                            displayName: employee.name,
+                            email: employeeData.email,
+                            displayName: employeeData.name,
                         })
                         .catch(error => {
                             if (error.code === 'auth/email-already-exists') {
@@ -49,10 +34,10 @@ export default async (companyId:string, employee:any) => {
 
     // Add Employee record
     await admin.firestore()
-            .collection(`companies/${companyId}/employees`)
+            .collection(`companies/${company.id}/employees`)
             .add({ 
                 uid: user.uid,
-                ...employee, 
+                ...employeeData, 
                 enrolledCourses: [],
                 createdAt: admin.firestore.FieldValue.serverTimestamp() 
             })
@@ -78,7 +63,7 @@ export default async (companyId:string, employee:any) => {
                     to: user.email,
                     message: {
                         subject: `Welcome to ${functions.config().business.name}!`,
-                        html: `<b>Welcome ${employee.name}!</b> <br/><br/>Kindly use <a href="${signInLink}">this link</a> to sign in anytime you want to learn!<br/><br/>Cheers!`,
+                        html: `<b>Welcome ${employeeData.name}!</b> <br/><br/>Kindly use <a href="${signInLink}">this link</a> to sign in anytime you want to learn!<br/><br/>Cheers!`,
                     }
                 })
                 .catch(error => {

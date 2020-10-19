@@ -94,7 +94,7 @@
 
                     if (unauthorized) {
                         this.alert = {
-                            message: 'You are not authorized to access the Admin Portal.',
+                            message: 'You are not authorized to access the HR Portal.',
                             show: true,
                         }
                     }

@@ -143,9 +143,11 @@
                                     <div class="pb-1">
                                         <span class="text-decoration-underline">Billing:</span> 
                                         <span v-if="selectedPlan.billing">
-                                            {{ $$config.currency }} {{ selectedPlan.billing.amount / 100 }} {{ selectedPlan.billing.interval }}
+                                            {{ $$config.currency }} {{ selectedPlan.billing.price }} {{ selectedPlan.billing.interval }}
                                         </span>
-                                        <span v-else>Free</span>
+                                        <span v-else>
+                                            Free
+                                        </span>
                                     </div>
                                 </v-sheet>
 
@@ -206,10 +208,6 @@
                     courses: [],
                     licensedNumberOfEmployees: null,
                     name: null,
-                    subscription: {
-                        fee: null,
-                        paymentCycleInDays: null,
-                    }
                 },
                 plans: [],
                 settings: {
@@ -244,13 +242,9 @@
                 this.isRegistering = true;
 
                 try {
-                    const registerCompany = firebase.functions().httpsCallable('registerCompany');
-
-                    await registerCompany({
+                    const companyData = {
                         logo: this.logo,
-                        subscription: {
-                            planId: this.selectedPlan.id,
-                        },
+                        plan: this.selectedPlan.id,
                         name: this.name,
                         email: this.email,
                         phoneNumber: this.phoneNumber.formatted,
@@ -264,7 +258,11 @@
                             country: this.country
                         },
                         postalAddress: this.postalAddress
-                    });
+                    };
+                    
+                    const registerCompany = firebase.functions().httpsCallable('registerCompany');
+
+                    await registerCompany({ companyData });
 
                     this.$router.push('/dashboard');
                 } catch (error) {           

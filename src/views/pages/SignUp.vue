@@ -34,28 +34,6 @@
                             :rules="[required,isEmail]"
                             required/>
 
-                            <v-row no-gutters>
-                                <v-col class="pr-2" style="max-width:100px;">
-                                    <v-select v-model="phoneNumber.countryCode" 
-                                        :items="countries" 
-                                        item-text="callingCodes[0]" 
-                                        item-value="alpha2Code"
-                                        name="countryCode"
-                                        prepend-icon="mdi-phone"
-                                        :rules="[required]"
-                                        required/>
-                                </v-col>
-                                <v-col>
-                                    <v-text-field v-model="phoneNumber.input" 
-                                        @input="phoneNumber.formatted = formatAsE164PhoneNumber($event)"
-                                        label="Phone Number"
-                                        name="phoneNumber"
-                                        type="tel"
-                                        :rules="[required,isPhoneNumber]"
-                                        required/>
-                                </v-col>
-                            </v-row>
-
                         <v-text-field v-model="password"
                             label="Password"
                             name="password"
@@ -97,11 +75,6 @@
         data() {
             return {
                 email: null,
-                phoneNumber: {
-                    countryCode: 'GH',
-                    input: null,
-                    formatted: null,
-                },
                 password: null,
                 name: null,
                 alert: {
@@ -117,14 +90,15 @@
                 this.isSigningUp = true;
 
                 try {
-                    const signUpHR = firebase.functions().httpsCallable('signUpHR');
-
-                    await signUpHR({
+                    const hrData = {
                         email: this.email,
-                        phoneNumber: this.phoneNumber.formatted,
                         password: this.password,
                         displayName: this.name,
-                    });
+                    };
+                    
+                    const signUpHR = firebase.functions().httpsCallable('signUpHR');
+
+                    await signUpHR({ hrData });
 
                     await firebase.auth().signInWithEmailAndPassword(this.email, this.password);
                 } catch (error) {            

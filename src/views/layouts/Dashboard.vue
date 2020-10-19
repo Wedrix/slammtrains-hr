@@ -101,7 +101,7 @@
             <v-menu left bottom>
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn class="ml-2" color="secondary" fab :elevation="0" small v-bind="attrs" v-on="on">
-                        {{ getInitials(admin.name) }}
+                        {{ getInitials(hr.name) }}
                     </v-btn>
                 </template>
 
@@ -129,15 +129,15 @@
 
         <v-main class="plain-background">
             <v-container fluid>
-                <v-alert :value="hasDueBill"
+                <v-alert :value="isShowingManageBillingAlert"
                     dismissible
                     color="secondary"
                     border="left"
                     elevation="2"
                     class="mx-lg-6"
                     colored-border>
-                        Your current plan is inactive. Kindly make payment or pick another plan.
-                        <v-btn color="secondary" class="ml-4">Make Payment</v-btn>
+                        Your subscription has expired. Kindly renew it or pick another plan.
+                        <v-btn color="secondary" class="ml-4" to="/dashboard/settings/billing">Manage Billing</v-btn>
                 </v-alert>
 
                 <router-view/>
@@ -198,8 +198,8 @@
                     }
                 ],
                 
-                hasDueBill: false,
                 isShowingNavDrawer: null,
+                isShowingManageBillingAlert: false,
             };
         },
         computed: {
@@ -207,24 +207,19 @@
                 'company',
             ]),
             ...mapGetters([
-                'admin',
-                'subscription',
+                'hr',
+                'subscriptionHasExpired'
             ]),
         },
         watch: {
-            subscription(subscription) {
-                if (subscription) {
-                    if (subscription.plan.billing === undefined) {
-                        this.hasDueBill = false;
+            $route: {
+                immediate: true,
+                handler($route) {
+                    if (this.subscriptionHasExpired && (this.$route.path !== '/dashboard/settings/billing')) {
+                        this.isShowingManageBillingAlert = true;
+                    } else {
+                        this.isShowingManageBillingAlert = false;
                     }
-
-                    if (subscription.expiresAt) {
-                        const expiresAt = moment(subscription.expiresAt.toMillis());
-
-                        this.hasDueBill = moment().isAfter(expiresAt);
-                    }
-                } else {
-                    this.hasDueBill = true;
                 }
             }
         },

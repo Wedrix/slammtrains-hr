@@ -123,8 +123,9 @@ const dashboardValidation = (to, from, next) => {
 
           const company = (await firebase.firestore()
                                         .collection('companies')
-                                        .where('admin.uid','==',user.uid)
-                                        .get()).docs[0];
+                                        .where('hr.uid','==',user.uid)
+                                        .get())
+                                        .docs[0];
           
           if (!company) {
             next('/register_company');

@@ -114,7 +114,7 @@
                         class="pa-4"
                         color="white">
                             <div>
-                                <div class="text-h6">{{ subscription.plan.name }}:</div>
+                                <div class="text-h6">{{ company.plan.name }}:</div>
                                 <div class="text-caption">
                                     <strong>{{ employeeLicencesRemaining }}</strong> Employee Licenses remaining
                                 </div>
@@ -161,17 +161,6 @@
                                 {{ formatDate(item.createdAt.toMillis(), 'createdAt') }}
                             </template>
                             <template v-slot:[`item.actions`]="{ item }">
-                                <v-tooltip top>
-                                    <template v-slot:activator="{ on, attrs }">
-                                        <v-btn icon 
-                                            v-bind="attrs"
-                                            v-on="on"
-                                            color="purple" >
-                                                <v-icon small>mdi-finance</v-icon>
-                                        </v-btn>
-                                    </template>
-                                    <span>View Progress</span>
-                                </v-tooltip>
                                 <v-tooltip top>
                                     <template v-slot:activator="{ on, attrs }">
                                         <v-btn icon 
@@ -308,16 +297,9 @@
                 'company',
             ]),
             ...mapGetters([
-                'admin',
-                'subscription',
+                'hr',
+                'employeeLicencesRemaining'
             ]),
-            employeeLicencesRemaining() {
-                if (this.subscription.plan.licensedNumberOfEmployees) {
-                    return (this.subscription.plan.licensedNumberOfEmployees - this.employeesTotalCount);
-                }
-
-                return null;
-            },
             query() {
                 const { sortBy, sortDesc, limit } = this.pagination;
                 const sortOrder = sortDesc ? 'desc' : 'asc';
@@ -347,16 +329,22 @@
             async addEmployee() {
                 this.isAddingNewEmployee = true;
 
-                const companyId = this.company.id;
-                const employee = JSON.parse(JSON.stringify(this.newEmployee));
+                const employeeData = JSON.parse(JSON.stringify(this.newEmployee));
                 
                 try {
                     const addEmployee = firebase.functions().httpsCallable('addEmployee');
                     const newEmployee = JSON.parse(JSON.stringify(this.newEmployee));
 
-                    await addEmployee({ companyId, employee });
+                    await addEmployee({ employeeData });
 
                     await this.loadEmployees();
+
+                    const notification = {
+                        message: 'Employee Successfully Added',
+                        context: 'success',
+                    };
+
+                    this.$store.commit('push_notification', { notification });
                 } catch (error) {
                     const notification = {
                         message: error.message,
@@ -478,11 +466,9 @@
                 this.$set(this.isRemovingEmployees, employeeId, true);
 
                 try {
-                    const companyId = this.company.id;
-
                     const removeEmployee = firebase.functions().httpsCallable('removeEmployee');
 
-                    await removeEmployee({ companyId, employeeId });
+                    await removeEmployee({ employeeId });
 
                     await this.loadEmployees();
                 } catch (error) {

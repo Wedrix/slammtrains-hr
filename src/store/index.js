@@ -6,12 +6,14 @@ import 'firebase/firestore';
 
 import { vuexfireMutations, firestoreAction } from 'vuexfire';
 
+import moment from 'moment';
+
 Vue.use(Vuex);
 
 const init = {
   notifications: [],
   company: {
-    admin: {
+    hr: {
       id: '',
       email: '',
       name: ''
@@ -20,23 +22,58 @@ const init = {
       src: '',
     },
     name: '',
-    subscription: {
-      plan: {
-        name: '',
-        courses: [],
-      }
+    plan: {
+      name: '',
+      courses: [],
+      licensedNumberOfEmployees: null,
     },
+    billing: null,
   },
 };
 
 export default new Vuex.Store({
   state: { ...init },
   getters: {
-    admin(state) {
-      return state.company.admin;
+    hr(state) {
+      return state.company.hr;
     },
-    subscription(state) {
-      return state.company.subscription;
+    subscriptionHasExpired(state) {
+      if (state.company.plan.billing) {
+        if (state.company.subscription) {
+          const subscriptionEndsAt = moment(state.company.subscription.endsAt);
+  
+          return subscriptionEndsAt.isBefore();
+        }
+      }
+
+      return false;
+    },
+    subscriptionShouldBeRenewed(state) {
+      if (state.company.plan.billing) {
+        if (state.company.subscription) {
+          const subscriptionEndsAt = moment(state.company.subscription.endsAt);
+  
+          return (subscriptionEndsAt.diff(moment(), 'days') < 3);
+        }
+      }
+
+      return false;
+    },
+    unsubscribed(state) {
+      if (state.company.plan.billing) {
+        if (!state.company.subscription) {
+          return true;
+        }
+      }
+
+      return false;
+    },
+    employeeLicencesRemaining(state) {
+        if (state.company.plan.licensedNumberOfEmployees) {
+          return (state.company.plan.licensedNumberOfEmployees - state.company.employeesTotalCount);
+        }
+
+        return null;
     },
   },
   mutations: {
@@ -55,18 +92,20 @@ export default new Vuex.Store({
     initialize: firestoreAction(async ({ bindFirestoreRef }, { uid }) => {
       const companyId = (await firebase.firestore()
                                     .collection('companies')
-                                    .where('admin.uid','==',uid)
+                                    .where('hr.uid','==',uid)
                                     .get()
                                     .then(companiesSnapshot => {
                                       const companySnapshot = companiesSnapshot.docs[0];
 
-                                      return companySnapshot.id;
+                                      return companySnapshot ? companySnapshot.id : null;
                                     }));
 
-      const companyRef = firebase.firestore()
-                                .doc(`companies/${companyId}`);
-
-      return bindFirestoreRef('company', companyRef, { wait: true });
+      if (companyId) {
+        const companyRef = firebase.firestore()
+                                  .doc(`companies/${companyId}`);
+  
+        return bindFirestoreRef('company', companyRef, { wait: true });
+      }
     }),
     clear({ commit }) {
       commit('clear_state');
