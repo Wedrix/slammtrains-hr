@@ -224,7 +224,7 @@ exports.importEmployeesOnCSVUpload = functions.storage.object().onFinalize(async
 exports.processPaystackEvents = functions.https.onRequest(processPaystackEvents);
 
 exports.notifyCompaniesOfSubscriptionExpiry = functions.pubsub
-                                                        .schedule('every 10 minutes from 10:00 to 14:00')
+                                                        .schedule('every 10 minutes from 03:00 to 07:00')
                                                         .onRun(async (context) => {
                                                             await notifyCompaniesOfSubscriptionExpiry();
                                                         });

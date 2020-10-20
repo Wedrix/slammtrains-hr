@@ -40,8 +40,8 @@ export default async (transaction: Paystack.Transaction) => {
                 .update({ 
                     subscription: {
                         endsAt: moment().add(BillingIntervals[company.plan.billing.interval], 'days').valueOf(),
+                        expiryNotificationSentAt: null,
                         transaction,
-                        notified: false,
                     },
                 })
                 .catch(error => {

@@ -16,14 +16,14 @@ export default async () => {
                                 .collection('companies')
                                 .where('subscription.endsAt', '>', now)
                                 .where('subscription.endsAt', '<=', threeDaysFromNow)
-                                .where('subscription.notified', '==', false)
+                                .where('subscription.expiryNotificationSentAt', '==', null)
                                 .select()
                                 .limit(batchSize)
                                 .get()
                                 .then(querySnapshot => {
                                     const documentSnapshots: admin.firestore.DocumentSnapshot[] = [];
 
-                                    querySnapshot.forEach(async documentSnapshot => {
+                                    querySnapshot.forEach(documentSnapshot => {
                                         documentSnapshots.push(documentSnapshot);
                                     });
 
@@ -80,7 +80,7 @@ export default async () => {
                         await admin.firestore()
                                     .doc(`companies/${document.id}`)
                                     .update({
-                                        'subscription.notified': true,
+                                        'subscription.expiryNotificationSentAt': now,
                                     })
                                     .catch(error => {
                                         throw new functions.https.HttpsError('internal', 'The subscription could not be updated.', error);
