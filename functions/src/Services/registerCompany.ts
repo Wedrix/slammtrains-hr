@@ -27,6 +27,8 @@ export default async (uid: string, companyData: CompanyData) => {
 
     const subscription = null;
 
+    const accessBlockedAt = null;
+
     const plan = admin.firestore().doc(`plans/${companyData.plan}`);
 
     await admin.firestore()
@@ -38,6 +40,7 @@ export default async (uid: string, companyData: CompanyData) => {
                     plan,
                     employeesTotalCount: 0,
                     subscription,
+                    accessBlockedAt,
                 });
 
     // Send Welcome Email

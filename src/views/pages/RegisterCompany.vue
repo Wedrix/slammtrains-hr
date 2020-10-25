@@ -143,7 +143,7 @@
                                     <div class="pb-1">
                                         <span class="text-decoration-underline">Billing:</span> 
                                         <span v-if="selectedPlan.billing">
-                                            {{ $$config.currency }} {{ selectedPlan.billing.price }} {{ selectedPlan.billing.interval }}
+                                            {{ selectedPlan.billing.currency }} {{ selectedPlan.billing.price }} {{ selectedPlan.billing.interval }}
                                         </span>
                                         <span v-else>
                                             Free

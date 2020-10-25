@@ -6,6 +6,8 @@ import * as Paystack from '../Schema/Paystack';
 import { Company } from '../Schema/Company';
 import { BillingIntervals } from '../Schema/Billing';
 
+import unblockCompanyAccess from './unblockCompanyAccess';
+
 export default async (transaction: Paystack.Transaction) => {
     const company = await admin.firestore()
                                 .collection('companies')
@@ -23,24 +25,33 @@ export default async (transaction: Paystack.Transaction) => {
                                     return Company.parseAsync(documentData);
                                 });
 
+    if (!company.plan) {
+        throw new functions.https.HttpsError('failed-precondition', 'The plan no longer exists, most likely because, it has removed by the Admin.');
+    }
+
     if (transaction.metadata.planId !== company.plan.id) {
-        throw new functions.https.HttpsError('failed-precondition', 'The plan associated with this payment does not match the company\'s current plan.');
+        throw new functions.https.HttpsError('failed-precondition', 'The plan associated with this payment does not match.');
     }
 
     if (!company.plan.billing) {
-        throw new functions.https.HttpsError('failed-precondition', 'The current plan for the company does not have billing.');
+        throw new functions.https.HttpsError('failed-precondition', 'Billing is not enabled for the plan.');
     }
 
     if ((transaction.amount / 100) !== company.plan.billing.price) {
         throw new functions.https.HttpsError('failed-precondition', 'The plan has not been paid for in full.');
+    }
+
+    if (company.accessBlockedAt) {
+        await unblockCompanyAccess(company.id);
     }
     
     await admin.firestore()
                 .doc(`companies/${company.id}`)
                 .update({ 
                     subscription: {
-                        endsAt: moment().add(BillingIntervals[company.plan.billing.interval], 'days').valueOf(),
-                        expiryNotificationSentAt: null,
+                        createdAt: moment().valueOf(),
+                        expiresAt: moment().add(BillingIntervals[company.plan.billing.interval], 'days').valueOf(),
+                        expiryReminderNotificationSentAt: null,
                         transaction,
                     },
                 })

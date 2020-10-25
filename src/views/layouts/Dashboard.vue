@@ -4,7 +4,7 @@
             v-model="isShowingNavDrawer"
             app>
                 <v-list>
-                    <v-list-item class="px-2">
+                    <v-list-item class="pa-1">
                         <v-list-item-avatar tile>
                             <v-img v-if="company.logo" :src="company.logo.src"></v-img>
                             <v-btn v-else fab :elevation="0" small>
@@ -84,7 +84,7 @@
             <v-app-bar-nav-icon class="mr-6" :class="{ 'd-none': isShowingNavDrawer }"
                 @click="isShowingNavDrawer = !isShowingNavDrawer"/>
     
-            <v-avatar tile width="145" color="white" size="40">
+            <v-avatar tile width="145" color="white">
                 <img src="@/assets/logo.png"/>
             </v-avatar>
 
@@ -129,14 +129,14 @@
 
         <v-main class="plain-background">
             <v-container fluid>
-                <v-alert :value="isShowingManageBillingAlert"
+                <v-alert :value="billingAlert.show"
                     dismissible
                     color="secondary"
                     border="left"
                     elevation="2"
                     class="mx-lg-6"
                     colored-border>
-                        Your subscription has expired. Kindly renew it or pick another plan.
+                        {{ billingAlert.message }}
                         <v-btn color="secondary" class="ml-4" to="/dashboard/settings/billing">Manage Billing</v-btn>
                 </v-alert>
 
@@ -199,7 +199,10 @@
                 ],
                 
                 isShowingNavDrawer: null,
-                isShowingManageBillingAlert: false,
+                billingAlert: {
+                    show: false,
+                    message: '',
+                }
             };
         },
         computed: {
@@ -208,7 +211,8 @@
             ]),
             ...mapGetters([
                 'hr',
-                'subscriptionHasExpired'
+                'subscriptionHasExpired',
+                'planNotSet'
             ]),
         },
         watch: {
@@ -216,9 +220,17 @@
                 immediate: true,
                 handler($route) {
                     if (this.subscriptionHasExpired && (this.$route.path !== '/dashboard/settings/billing')) {
-                        this.isShowingManageBillingAlert = true;
+                        this.billingAlert = {
+                            message: 'Your subscription has expired. Kindly renew it or pick another plan.',
+                            show: true,
+                        };
+                    } else if (this.planNotSet && (this.$route.path !== '/dashboard/settings/billing')) {
+                        this.billingAlert = {
+                            message: 'Unfortunately, the plan you selected is no longer available. Kindly pick another plan or request a custom solution.',
+                            show: true,
+                        };
                     } else {
-                        this.isShowingManageBillingAlert = false;
+                        this.billingAlert.show = false;
                     }
                 }
             }
@@ -269,5 +281,11 @@
     }
     .plain-background {
         background-color: #32527910 !important;
+    }
+</style>
+
+<style scoped>
+    .v-list {
+        padding: 0;
     }
 </style>

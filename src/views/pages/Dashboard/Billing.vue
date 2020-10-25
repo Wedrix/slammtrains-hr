@@ -38,42 +38,49 @@
                                 </div>
                             </template>
                             <template v-else>
-                                <div class="text-h6">
-                                    {{ company.plan.name }} 
-                                    <span class="text-caption">(current plan)</span>
-                                </div>
-                                
-                                <div class="text-caption py-2">
-                                    <div>
-                                        <span>
-                                            <strong>{{ company.plan.licensedNumberOfEmployees }}</strong> Employee Licenses,
-                                        </span>
-                                        <span>
-                                            <strong>{{ employeeLicencesRemaining }}</strong> remaining
-                                        </span>
+                                <template v-if="planNotSet">
+                                    <div class="d-flex" style="justify-content:center;align-items:center;min-height:120px;">
+                                        <div class="primary--text">Kindly select a plan or request an enterprise solution.</div>
                                     </div>
-                                    <div>
-                                        <strong>{{ company.plan.courses.length }}</strong> licensed courses
+                                </template>
+                                <template v-else-if="company.plan">
+                                    <div class="text-h6">
+                                        {{ company.plan.name }} 
+                                        <span class="text-caption">(current plan)</span>
                                     </div>
-                                </div>
-
-                                <div v-if="unsubscribed" class="py-3">
-                                    <v-btn color="accent" rounded block @click="activatePlan()">
-                                        {{ unsubscribed ? 'Subscribe' : ((subscriptionHasExpired || subscriptionShouldBeRenewed) ? 'Renew Subscription' : '') }}
-                                    </v-btn>
-                                </div>
-
-                                <v-divider class="my-2"/>
-
-                                <div class="pb-2">
-                                    <div 
-                                        v-for="course in company.plan.courses" 
-                                        :key="course.id" 
-                                        class="text-body-2 py-1">
-                                            <v-icon small color="green">mdi-check</v-icon>
-                                            {{ course.name }}
+                                    
+                                    <div class="text-caption py-2">
+                                        <div>
+                                            <span>
+                                                <strong>{{ company.plan.licensedNumberOfEmployees }}</strong> Employee Licenses,
+                                            </span>
+                                            <span>
+                                                <strong>{{ employeeLicencesRemaining }}</strong> remaining
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <strong>{{ company.plan.courses.length }}</strong> licensed courses
+                                        </div>
                                     </div>
-                                </div>
+
+                                    <div v-if="unsubscribed" class="py-3">
+                                        <v-btn color="accent" rounded block @click="activatePlan()">
+                                            {{ unsubscribed ? 'Subscribe' : ((subscriptionHasExpired || subscriptionShouldBeRenewed) ? 'Renew Subscription' : '') }}
+                                        </v-btn>
+                                    </div>
+
+                                    <v-divider class="my-2"/>
+
+                                    <div class="pb-2">
+                                        <div 
+                                            v-for="course in company.plan.courses" 
+                                            :key="course.id" 
+                                            class="text-body-2 py-1">
+                                                <v-icon small color="green">mdi-check</v-icon>
+                                                {{ course.name }}
+                                        </div>
+                                    </div>
+                                </template>
                             </template>
                     </v-card>
                     <v-card 
@@ -190,15 +197,18 @@
                 'unsubscribed',
                 'subscriptionHasExpired',
                 'subscriptionShouldBeRenewed',
+                'planNotSet'
             ]),
             otherPlans() {
-                if (this.company.plan.id) {
+                const otherPlans = this.plans;
+
+                if (this.company.plan?.id) {
                     return this.plans.filter(plan => {
                         return (plan.id !== this.company.plan.id);
                     });
                 }
 
-                return [];
+                return otherPlans;
             }
         },
         watch: {
@@ -234,6 +244,18 @@
 
                 this.isLoadingPlan = true;
 
+                if (this.changedPlan.billing) {
+                    const changedPlan = { ...this.changedPlan };
+
+                    const unwatch = this.$watch('company.plan', async (plan) => {
+                        if (plan.id === changedPlan.id) {
+                            await this.activatePlan();
+
+                            unwatch();
+                        }
+                    });
+                }
+
                 try {
                     const setPlanForCompany = firebase.functions()
                                                     .httpsCallable('setPlanForCompany');
@@ -250,9 +272,7 @@
 
                 this.isLoadingPlan = false;
 
-                if (this.changedPlan.billing) {
-                    await this.activatePlan();
-                }
+                this.unsetChangedPlan();
             },
             async activatePlan() {
                 if (this.company.plan.billing) {

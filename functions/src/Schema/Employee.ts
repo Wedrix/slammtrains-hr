@@ -2,7 +2,6 @@ import * as Schema from 'zod';
 
 import { Course } from './Course';
 import { resolveCourse } from '../Helpers/ResolveDocuments';
-import { Timestamp } from './Firebase';
 
 export const Employee = Schema.object({
     name: Schema.string(),
@@ -17,7 +16,7 @@ export const Employee = Schema.object({
             return course;
         })
     ),
-    createdAt: Timestamp,
+    createdAt: Schema.number(),
 });
 
 export type Employee = Schema.infer<typeof Employee>;

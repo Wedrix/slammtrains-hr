@@ -43,16 +43,25 @@ export const resolveEmployee = async (documentPath: string | admin.firestore.Doc
                     });
 };
 
-export const resolvePlan = async (documentPath: string | admin.firestore.DocumentReference) => {
-    const document = await fetchDocument(documentPath);
-
-    const documentData = Object.assign(document.data(), { id: document.id });
-    
-    return Plan.parseAsync(documentData)
-                .catch(error => {
-                    functions.logger.error('Error resolving document', error);
+export const resolvePlan = async (documentPathOrData: any) => {
+    return Plan.parseAsync(documentPathOrData)
+                .catch(async () => {
+                    const document = await fetchDocument(documentPathOrData);
+                
+                    const documentData = document.data();
+                
+                    if (!documentData) {
+                        return null;
+                    }
+                
+                    const plan = Object.assign(documentData, { id: document.id });
                     
-                    throw new functions.https.HttpsError('internal', 'The document is invalid or non-existent', error);
+                    return Plan.parseAsync(plan)
+                                .catch(error => {
+                                    functions.logger.error('Error resolving document', error);
+                                    
+                                    throw new functions.https.HttpsError('internal', 'The document is invalid', error);
+                                });
                 });
 };
 

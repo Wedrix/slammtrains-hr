@@ -26,14 +26,15 @@ export const Company = Schema.object({
     numberOfEmployees: Schema.string(),
     phoneNumber: Schema.string(),
     postalAddress: Schema.string().nullable(),
-    plan: Schema.transformer(Schema.any(), Plan, async (plan) => {
+    plan: Schema.transformer(Schema.any().nullable(), Plan.nullable(), async (plan) => {
         if (!Plan.check(plan)) {
             return resolvePlan(plan);
         }
 
         return plan;
-    }),
+    }).nullable(),
     subscription: Schema.nullable(Subscription),
+    accessBlockedAt: Schema.number().nullable(),
 });
 
 export type HR = Schema.infer<typeof HR>;

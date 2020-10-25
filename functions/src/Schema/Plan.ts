@@ -21,7 +21,4 @@ export const Plan = Schema.object({
     billing: Schema.nullable(Billing),
 });
 
-export const NewPlan = Plan.omit({ id: true });
-
 export type Plan = Schema.infer<typeof Plan>;
-export type NewPlan = Schema.infer<typeof NewPlan>;

@@ -7,16 +7,16 @@ import PromisePool = require('@supercharge/promise-pool');
 import { resolveCompany } from '../Helpers/ResolveDocuments';
 
 export default async () => {
-    const threeDaysFromNow = moment().add(3, 'days').valueOf();
     const now = moment().valueOf();
+    const threeDaysFromNow = moment().add(3, 'days').valueOf();
 
     const batchSize = 200;
 
     const documents = await admin.firestore()
                                 .collection('companies')
-                                .where('subscription.endsAt', '>', now)
-                                .where('subscription.endsAt', '<=', threeDaysFromNow)
-                                .where('subscription.expiryNotificationSentAt', '==', null)
+                                .where('subscription.expiresAt', '>', now)
+                                .where('subscription.expiresAt', '<=', threeDaysFromNow)
+                                .where('subscription.expiryReminderNotificationSentAt', '==', null)
                                 .select()
                                 .limit(batchSize)
                                 .get()
@@ -38,7 +38,7 @@ export default async () => {
                     .process(async (document) => {
                         const company = await resolveCompany(`companies/${document.id}`);
 
-                        const daysLeft = moment(company.subscription?.endsAt).diff(moment(), 'days');
+                        const daysLeft = moment(company.subscription?.expiresAt).diff(moment(), 'days');
 
                         await admin.firestore()
                                 .collection('mail')
@@ -47,7 +47,7 @@ export default async () => {
                                     message: {
                                         subject: `Your subscription expires in ${daysLeft} days!`,
                                         html: `Hello ${company.hr.name},
-                                            <br/>Your subscription will expire in ${daysLeft} days.:
+                                            <br/>Your subscription will expire in ${daysLeft} day(s).
                                             <br/>
                                             <br/>To prevent any disruption of service, kindly take the following steps to renew your subscription:
                                             <br/>
@@ -71,7 +71,7 @@ export default async () => {
                                         body: `Your subscription expires in ${daysLeft} days. Kindly navigate to the billing page to renew it.`,
                                         title: `Your subscription expires in ${daysLeft} days!`,
                                         read: false,
-                                        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                                        createdAt: now,
                                     })
                                     .catch(error => {
                                         throw new functions.https.HttpsError('internal', 'The notification record could not be added', error);
@@ -80,7 +80,7 @@ export default async () => {
                         await admin.firestore()
                                     .doc(`companies/${document.id}`)
                                     .update({
-                                        'subscription.expiryNotificationSentAt': now,
+                                        'subscription.expiryReminderNotificationSentAt': now,
                                     })
                                     .catch(error => {
                                         throw new functions.https.HttpsError('internal', 'The subscription could not be updated.', error);

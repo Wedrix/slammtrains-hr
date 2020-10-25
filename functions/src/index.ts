@@ -6,7 +6,7 @@ import * as os from 'os';
 
 admin.initializeApp(functions.config().firebase);
 
-import seedDatabase from './Services/seedDatabase';
+import setAdmin from './Services/setAdmin';
 import signUpHR from './Services/signUpHR';
 import registerCompany from './Services/registerCompany';
 import addEmployee from './Services/addEmployee';
@@ -16,7 +16,8 @@ import processPaystackEvents from './processPaystackEvents';
 import addPlan from './Services/addPlan';
 import setCustomPlanForCompany from './Services/setCustomPlanForCompany';
 import setPlanForCompany from './Services/setPlanForCompany';
-import notifyCompaniesOfSubscriptionExpiry from './Services/notifyCompaniesOfSubscriptionExpiry';
+import sendSubscriptionReminders from './Services/sendSubscriptionReminders';
+import blockAccessForCompaniesWithExpiredSubscriptions from './Services/blockAccessForCompaniesWithExpiredSubscriptions';
 
 import * as Schema from 'zod';
 import { EmployeeData, PlanData, CompanyData, HRData } from './Schema/Data';
@@ -88,8 +89,8 @@ const resolveCompanyIdForHR = async (auth: Auth | undefined) => {
     return companyId;
 };
 
-exports.seedDatabase = functions.https.onCall(async () => {
-    await seedDatabase();
+exports.setAdmin = functions.https.onCall(async () => {
+    await setAdmin();
 });
 
 exports.signUpHR = functions.https.onCall(async data => {
@@ -160,7 +161,7 @@ exports.setPlanForCompany = functions.https.onCall(async (data, context) => {
 exports.addPlan = functions.https.onCall(async (data, context) => {
     await authorizeRequestForAdmin(context.auth);
 
-    const planData = await PlanData.parseAsync(data.planId)
+    const planData = await PlanData.parseAsync(data.planData)
                                     .catch(error => {
                                         throw new functions.https.HttpsError('invalid-argument', 'The plan data is invalid', error);
                                     });
@@ -223,11 +224,17 @@ exports.importEmployeesOnCSVUpload = functions.storage.object().onFinalize(async
 
 exports.processPaystackEvents = functions.https.onRequest(processPaystackEvents);
 
-exports.notifyCompaniesOfSubscriptionExpiry = functions.pubsub
+exports.sendSubscriptionRemindersEveryTenMinutes = functions.pubsub
                                                         .schedule('every 10 minutes from 03:00 to 07:00')
                                                         .onRun(async (context) => {
-                                                            await notifyCompaniesOfSubscriptionExpiry();
+                                                            await sendSubscriptionReminders();
                                                         });
+
+exports.blockAccessForCompaniesWithExpiredSubscriptionsEveryTenMinutes = functions.pubsub
+                                                                            .schedule('every 10 minutes from 03:00 to 07:00')
+                                                                            .onRun(async (context) => {
+                                                                                await blockAccessForCompaniesWithExpiredSubscriptions();
+                                                                            });
 
 exports.incrementEmployeesTotalCountOnCreate = functions.firestore
                                                     .document(`/companies/{companyId}/employees/{employeeId}`)

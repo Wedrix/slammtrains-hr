@@ -24,7 +24,12 @@
                         elevation="2"
                         class="pa-4"
                         color="white">
-                            <div>
+                            <template v-if="planNotSet">
+                                <div class="d-flex" style="justify-content:center;align-items:center;min-height:120px;">
+                                    <div class="primary--text">Your account has no associated plan!</div>
+                                </div>
+                            </template>
+                            <template v-else>
                                 <div class="text-h6">{{ company.plan.name }}:</div>
                                 <div class="text-caption pb-2">
                                     <strong>{{ company.plan.courses.length }}</strong> licensed courses
@@ -58,8 +63,9 @@
                                             <v-divider :key="`divider-${index}`" inset/>
                                         </template>
                                 </v-list>
-                            </div>
-                            <v-btn class="mt-4" color="secondary" block>Upgrade Plan</v-btn>
+
+                                <v-btn class="mt-4" color="secondary" block>Upgrade Plan</v-btn>
+                            </template>
                     </v-card>
                 </v-col>
                 <v-col cols="12" md="9">    
@@ -190,6 +196,7 @@
             ]),
             ...mapGetters([
                 'hr',
+                'planNotSet'
             ])
         },
         firestore() {

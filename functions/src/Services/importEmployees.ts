@@ -9,6 +9,7 @@ import { resolveCompany } from '../Helpers/ResolveDocuments';
 import addEmployee from './addEmployee';
 
 import PromisePool = require('@supercharge/promise-pool');
+import { now } from 'moment';
 
 export default async (filePath: string, companyId: string) => {
     const company = await resolveCompany(`companies/${companyId}`);
@@ -89,7 +90,7 @@ export default async (filePath: string, companyId: string) => {
                     body: 'The import task did not successfully complete for all records. Kindly check your email for a detailed breakdown of the failed records.',
                     title: 'Some of the imports failed',
                     read: false,
-                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                    createdAt: now(),
                 })
                 .catch(error => {
                     throw new functions.https.HttpsError('internal', 'The notification record could not be added', error);

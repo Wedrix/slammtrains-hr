@@ -5,10 +5,16 @@ import { EmployeeData } from '../Schema/Data';
 import { resolveCompany } from '../Helpers/ResolveDocuments';
 
 export default async (employeeData: EmployeeData, companyId: string) => {
+    const now = new Date().valueOf();
+
     const company = await resolveCompany(`companies/${companyId}`);
 
+    if (!company.plan) {
+        throw new functions.https.HttpsError('failed-precondition', 'The plan no longer exists, most likely because, it has been removed by the Admin.');
+    }
+
     if (company.plan.licensedNumberOfEmployees <= company.employeesTotalCount) {
-        throw new functions.https.HttpsError('failed-precondition', 'You have exceeded the allowed number of emplyees for your plan.');
+        throw new functions.https.HttpsError('failed-precondition', 'All the employee licenses have been exausted for the plan.');
     }
 
     // Create User
@@ -27,7 +33,7 @@ export default async (employeeData: EmployeeData, companyId: string) => {
 
     // Set Claims 
     await admin.auth()
-            .setCustomUserClaims(user.uid, { accessLevel: 'employee' })
+            .setCustomUserClaims(user.uid, { accessLevel: 'employee', accessBlocked: false })
             .catch(error => {
                 throw new functions.https.HttpsError('internal', 'The custom claims could not be set on this user', error);
             });
@@ -39,7 +45,7 @@ export default async (employeeData: EmployeeData, companyId: string) => {
                 uid: user.uid,
                 ...employeeData, 
                 enrolledCourses: [],
-                createdAt: admin.firestore.FieldValue.serverTimestamp() 
+                createdAt: now, 
             })
             .catch(error => {
                 throw new functions.https.HttpsError('internal', 'The employee record could not be created', error);

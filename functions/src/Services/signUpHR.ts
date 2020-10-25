@@ -21,7 +21,7 @@ export default async (hrData: HRData) => {
 
     // Set Claims 
     await admin.auth()
-                .setCustomUserClaims(user.uid, { accessLevel: 'hr' })
+                .setCustomUserClaims(user.uid, { accessLevel: 'hr', accessBlocked: false })
                 .catch(error => {
                     throw new functions.https.HttpsError('internal', 'The custom claims could not be set on this user', error);
                 });

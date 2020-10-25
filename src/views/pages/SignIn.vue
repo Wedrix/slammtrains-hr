@@ -12,7 +12,7 @@
                     </div>
                     <v-card-text>
                         <v-alert v-model="alert.show" 
-                            :dismissible="true" 
+                            :dismissible="false" 
                             :prominent="true" 
                             type="error">
                                 {{ alert.message }}

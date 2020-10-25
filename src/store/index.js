@@ -4,9 +4,20 @@ import Vuex from 'vuex';
 import firebase from '@/firebase';
 import 'firebase/firestore';
 
-import { vuexfireMutations, firestoreAction } from 'vuexfire';
-
 import moment from 'moment';
+
+import { vuexfireMutations, firestoreAction } from 'vuexfire';
+import { firestoreOptions } from 'vuexfire';
+
+firestoreOptions.serialize = snapshot => {
+  return Object.defineProperty(snapshot.data(), 'id', 
+      { 
+          value: snapshot.id, 
+          enumerable: true, 
+          configurable: true, 
+          writable: true 
+      });
+};
 
 Vue.use(Vuex);
 
@@ -22,12 +33,8 @@ const init = {
       src: '',
     },
     name: '',
-    plan: {
-      name: '',
-      courses: [],
-      licensedNumberOfEmployees: null,
-    },
-    billing: null,
+    plan: null,
+    subscription: null,
   },
 };
 
@@ -38,29 +45,36 @@ export default new Vuex.Store({
       return state.company.hr;
     },
     subscriptionHasExpired(state) {
-      if (state.company.plan.billing) {
+      if (state.company.plan?.billing) {
         if (state.company.subscription) {
-          const subscriptionEndsAt = moment(state.company.subscription.endsAt);
+          const subscriptionExpiresAt = moment(state.company.subscription.expiresAt);
   
-          return subscriptionEndsAt.isBefore();
+          return subscriptionExpiresAt.isBefore();
         }
       }
 
       return false;
     },
+    planNotSet(state) {
+      if (!state.company.plan) {
+        return true;
+      }
+
+      return false;
+    },
     subscriptionShouldBeRenewed(state) {
-      if (state.company.plan.billing) {
+      if (state.company.plan?.billing) {
         if (state.company.subscription) {
-          const subscriptionEndsAt = moment(state.company.subscription.endsAt);
+          const subscriptionExpiresAt = moment(state.company.subscription.expiresAt);
   
-          return (subscriptionEndsAt.diff(moment(), 'days') < 3);
+          return (subscriptionExpiresAt.diff(moment(), 'days') < 3);
         }
       }
 
       return false;
     },
     unsubscribed(state) {
-      if (state.company.plan.billing) {
+      if (state.company.plan?.billing) {
         if (!state.company.subscription) {
           return true;
         }
@@ -69,7 +83,7 @@ export default new Vuex.Store({
       return false;
     },
     employeeLicencesRemaining(state) {
-        if (state.company.plan.licensedNumberOfEmployees) {
+        if (state.company.plan) {
           return (state.company.plan.licensedNumberOfEmployees - state.company.employeesTotalCount);
         }
 

@@ -3,8 +3,9 @@ import * as Schema from 'zod';
 import * as Paystack from './Paystack';
 
 export const Subscription = Schema.object({
-    endsAt: Schema.number(),
-    expiryNotificationSentAt: Schema.number().nullable(),
+    createdAt: Schema.number(),
+    expiresAt: Schema.number(),
+    expiryReminderNotificationSentAt: Schema.number().nullable(),
     transaction: Paystack.Transaction,
 });
 

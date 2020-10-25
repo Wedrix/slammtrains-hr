@@ -113,13 +113,18 @@
                         elevation="2"
                         class="pa-4"
                         color="white">
-                            <div>
+                            <template v-if="planNotSet">
+                                <div class="d-flex" style="justify-content:center;align-items:center;min-height:120px;">
+                                    <div class="primary--text">Your account has no associated plan!</div>
+                                </div>
+                            </template>
+                            <template v-else>
                                 <div class="text-h6">{{ company.plan.name }}:</div>
                                 <div class="text-caption">
                                     <strong>{{ employeeLicencesRemaining }}</strong> Employee Licenses remaining
                                 </div>
-                            </div>
-                            <v-btn class="mt-4" color="secondary" block>Upgrade Plan</v-btn>
+                                <v-btn class="mt-4" color="secondary" block>Upgrade Plan</v-btn>
+                            </template>
                         </v-card>
                 </v-col>
                 <v-col cols="12" md="9">  
@@ -221,7 +226,7 @@
     import moment from 'moment';
     import { v4 as uuidv4 } from 'uuid';
 
-    const defaults = {
+    const init = {
         newEmployee: {
             email: '',
             name: ''
@@ -266,7 +271,7 @@
                 },
 
                 isShowingAddEmployeeForm: false,
-                newEmployee: defaults.newEmployee,
+                newEmployee: { ...init.newEmployee },
                 isAddingNewEmployee: false,
                 search: {
                     field: 'Name',
@@ -298,7 +303,8 @@
             ]),
             ...mapGetters([
                 'hr',
-                'employeeLicencesRemaining'
+                'employeeLicencesRemaining',
+                'planNotSet'
             ]),
             query() {
                 const { sortBy, sortDesc, limit } = this.pagination;
@@ -356,7 +362,7 @@
 
                 this.isAddingNewEmployee = false;
                 this.isShowingAddEmployeeForm = false;
-                this.newEmployee = defaults.newEmployee;
+                this.newEmployee = { ...init.newEmployee };
             },
             async importEmployees() {
                 this.isImportingEmployees = true;
