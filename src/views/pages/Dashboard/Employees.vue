@@ -163,7 +163,7 @@
                         show-select
                         hide-default-footer>
                             <template v-slot:[`item.createdAt`]="{ item }">
-                                {{ formatDate(item.createdAt.toMillis(), 'createdAt') }}
+                                {{ formatDate(item.createdAt, 'createdAt') }}
                             </template>
                             <template v-slot:[`item.actions`]="{ item }">
                                 <v-tooltip top>
@@ -226,6 +226,8 @@
     import moment from 'moment';
     import { v4 as uuidv4 } from 'uuid';
 
+    import { cloneDeep } from 'lodash';
+
     const init = {
         newEmployee: {
             email: '',
@@ -271,7 +273,7 @@
                 },
 
                 isShowingAddEmployeeForm: false,
-                newEmployee: { ...init.newEmployee },
+                newEmployee: cloneDeep(init.newEmployee),
                 isAddingNewEmployee: false,
                 search: {
                     field: 'Name',
@@ -335,13 +337,15 @@
             async addEmployee() {
                 this.isAddingNewEmployee = true;
 
-                const employeeData = JSON.parse(JSON.stringify(this.newEmployee));
+                const employeeData = cloneDeep(this.newEmployee);
                 
                 try {
-                    const addEmployee = firebase.functions().httpsCallable('addEmployee');
-                    const newEmployee = JSON.parse(JSON.stringify(this.newEmployee));
+                    const newEmployee = cloneDeep(this.newEmployee);
 
-                    await addEmployee({ employeeData });
+                    const addCompanyEmployee = firebase.functions()
+                                                .httpsCallable('addCompanyEmployee');
+
+                    await addCompanyEmployee({ employeeData });
 
                     await this.loadEmployees();
 
@@ -362,40 +366,10 @@
 
                 this.isAddingNewEmployee = false;
                 this.isShowingAddEmployeeForm = false;
-                this.newEmployee = { ...init.newEmployee };
+                this.newEmployee = cloneDeep(init.newEmployee);
             },
             async importEmployees() {
                 this.isImportingEmployees = true;
-
-                this.employeesCSVs.forEach((file, index) => {
-                    const fileId = `${uuidv4()}_${file.name}`;
-                    const ref = `companies/${this.company.id}/employees` + `/${fileId}`;
-                    const storageRef = firebase.storage().ref();
-
-                    const metadata = {
-                        contentType: file.type,
-                    };
-
-                    const uploadTask = storageRef.child(ref).put(file, metadata);
-                    
-                    uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, snapshot => {
-                        const percentUploadProgress = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-
-                        const notification = {
-                            message: `${file.name} upload progress: ${percentUploadProgress}%`,
-                            context: 'info',
-                        };
-
-                        this.$store.commit('push_notification', { notification });
-                    }, error => {
-                        const notification = {
-                            message: error.message,
-                            context: 'error',
-                        };
-
-                        this.$store.commit('push_notification', { notification });
-                    });                 
-                });
         
                 const unwatch = this.$watch('employeesTotalCount', async (newEmployeesTotalCount, oldEmployeesTotalCount) => {
                     if (newEmployeesTotalCount !== oldEmployeesTotalCount) {
@@ -405,6 +379,12 @@
                         await this.loadEmployees();
                     }
                 });
+
+                await Promise.all(
+                    this.employeesCSVs.map(async (file, index) => {
+                        await this.uploadFile(file, `companies/${this.company.id}/employees`);                 
+                    })
+                );
 
                 this.isLoadingEmployees = true;
 
@@ -472,9 +452,10 @@
                 this.$set(this.isRemovingEmployees, employeeId, true);
 
                 try {
-                    const removeEmployee = firebase.functions().httpsCallable('removeEmployee');
+                    const removeCompanyEmployee = firebase.functions()
+                                                        .httpsCallable('removeCompanyEmployee');
 
-                    await removeEmployee({ employeeId });
+                    await removeCompanyEmployee({ employeeId });
 
                     await this.loadEmployees();
                 } catch (error) {
@@ -487,7 +468,60 @@
                 }
 
                 this.$set(this.isRemovingEmployees, employeeId, false);
-            }
+            },
+            async uploadFile(file, storagePath) {
+                return new Promise((resolve, reject) => {
+                    const ref = `${storagePath}/${uuidv4()}_${file.name}`;
+                    const storageRef = firebase.storage().ref();
+
+                    const metadata = {
+                        contentType: file.type,
+                    };
+
+                    const uploadTask = storageRef.child(ref).put(file, metadata);
+
+                    uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, snapshot => {
+                        const percentUpload = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+
+                        this.$store.commit('push_notification', { 
+                            notification: {
+                                message: `Uploading "${file.name}" (${percentUpload}%)`,
+                                context: 'info',
+                                timeout: -1,
+                                tag: 'upload',
+                            }
+                        });
+                    }, error => {
+                        this.$store.commit('push_notification', { 
+                            notification: {
+                                message: `Error uploading "${file.name}"`,
+                                context: 'error',
+                                tag: 'upload',
+                            }
+                        });
+
+                        reject(error);
+                    }, async () => {
+                        this.$store.commit('push_notification', { 
+                            notification: {
+                                message: `Successfully uploaded "${file.name}"`,
+                                context: 'success',
+                                tag: 'upload',
+                            }
+                        });
+
+                        const downloadUrl = await uploadTask.snapshot.ref.getDownloadURL();
+
+                        const upload = {
+                            fileName: file.name,
+                            fullPath: ref,
+                            src: downloadUrl,
+                        }
+                        
+                        resolve(upload);
+                    });
+                });
+            },
         }
     };
 </script>

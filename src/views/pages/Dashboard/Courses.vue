@@ -32,24 +32,30 @@
                             <template v-else>
                                 <div class="text-h6">{{ company.plan.name }}:</div>
                                 <div class="text-caption pb-2">
-                                    <strong>{{ company.plan.courses.length }}</strong> licensed courses
+                                    <strong>{{ Array.purify(company.plan.courses).length }}</strong> licensed courses
                                 </div>
                                 <v-divider/>
-                                <v-list two-line light color="transparent">
+                                <v-list two-line light dense color="transparent">
                                     <template 
-                                        v-for="(course, index) in company.plan.courses">
-                                            <v-list-item :key="course.id">
+                                        v-for="(course, index) in Array.purify(company.plan.courses)">
+                                            <v-list-item :key="course.id" class="px-0">
                                                 <v-list-item-avatar v-if="course.thumbnail">
                                                     <v-img :src="course.thumbnail.src"/>
                                                 </v-list-item-avatar>
-
                                                 <v-list-item-content>
-                                                    <v-list-item-title>{{ course.name }}</v-list-item-title>
+                                                    <v-list-item-title class="text-overline">
+                                                        <router-link 
+                                                            class="d-inline-block text-truncate" 
+                                                            style="text-decoration:none;" 
+                                                            :to="`courses/${course.id}`">
+                                                                {{ course.name }}
+                                                        </router-link>
+                                                    </v-list-item-title>
                                                     <v-list-item-subtitle>
                                                         <div class="d-flex">
                                                             <div class="pt-1 mr-3">
                                                                 <v-icon small>mdi-book-outline</v-icon>
-                                                                <span class="text-caption">12 modules</span>
+                                                                <span class="text-caption">12 lessons</span>
                                                             </div>
                                                             <div class="pt-1 mr-3">
                                                                 <v-icon small>mdi-clock-outline</v-icon>
@@ -60,7 +66,7 @@
                                                 </v-list-item-content>
                                             </v-list-item>
 
-                                            <v-divider :key="`divider-${index}`" inset/>
+                                            <v-divider :key="`divider-${index}`"/>
                                         </template>
                                 </v-list>
 
@@ -113,52 +119,12 @@
                                 <v-row>
                                     <v-col
                                         v-for="item in props.items"
-                                        :key="item.name"
+                                        :key="item.id"
                                         cols="12"
                                         sm="6"
                                         md="4"
                                         lg="3">
-                                            <v-card
-                                                class="rounded-lg"
-                                                max-width="300">
-                                                    <v-img
-                                                        :src="item.thumbnail.src"
-                                                        height="150px">
-                                                            <div class="fill-height" style="position:relative;">
-                                                                <v-chip dark style="position:absolute;top:10;right:10;"
-                                                                    color="accent"
-                                                                    label>
-                                                                        New
-                                                                </v-chip>
-                                                            </div>
-                                                    </v-img>
-
-                                                    <v-card-title>
-                                                        <router-link 
-                                                            class="d-inline-block text-truncate" 
-                                                            style="text-decoration:none;" 
-                                                            :to="`courses/${item.id}`">
-                                                                {{ item.name }}
-                                                        </router-link>
-                                                    </v-card-title>
-
-                                                    <v-card-subtitle class="pt-1">
-                                                        {{ item.overview }}
-                                                    </v-card-subtitle>
-
-                                                    <v-divider/>
-
-                                                    <div class="px-4 py-2 d-flex" style="justify-content:space-between;">
-                                                        <div>
-                                                            <v-icon small>mdi-book-outline</v-icon>
-                                                            <span class="text-caption">12 modules</span>
-                                                        </div>
-                                                        <div>
-                                                            <v-icon small>mdi-clock-outline</v-icon>
-                                                            <span class="text-caption">24 hours</span>
-                                                        </div>
-                                                    </div>
-                                            </v-card>
+                                            <course-swatch :course="item"/>
                                     </v-col>
                                 </v-row>
                             </template>
@@ -171,14 +137,17 @@
 
 <script>
     import firebase from '@/firebase';
-    import 'firebase/auth';
-    import 'firebase/functions';
     import 'firebase/firestore';
 
     import { mapState, mapGetters } from 'vuex';
 
+    import CourseSwatch from '@/components/CourseSwatch';
+
     export default {
         name: 'Courses',
+        components: {
+            'course-swatch': CourseSwatch,
+        },
         data() {
             return {
                 tab: 0,
@@ -196,8 +165,8 @@
             ]),
             ...mapGetters([
                 'hr',
-                'planNotSet'
-            ])
+                'planNotSet',
+            ]),
         },
         firestore() {
             return {

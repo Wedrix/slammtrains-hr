@@ -1,9 +1,12 @@
 <template>
-    <v-snackbar top right app 
+    <v-snackbar 
+        top 
+        right 
+        app 
         v-model="isShowing"
-        :color="active.context"
+        :color="notification.context"
         :timeout="-1">
-            {{ active.message }}
+            {{ notification.message }}
 
             <template v-slot:action="{ attrs }">
                 <v-btn dark text 
@@ -21,54 +24,59 @@
         data() {
             return {
                 isShowing: false,
-                active: {
-                    context: 'info',
-                    message: '',
-                },
                 timer: null,
             };
         },
         computed: {
             notifications() {
                 return this.$store.state.notifications;
+            },
+            notification() {
+                return this.$store.state.notification;
             }
         },
         watch: {
             notifications() {
-                if (!this.isShowing) {
-                    this.showNextNotification();
-                }
+                this.showNextNotification();
             },
-            isShowing(isShowing) {
-                if (!isShowing) {
-                    this.showNextNotification();
-                }
+            isShowing() {
+                this.showNextNotification();
             }
         },
         methods: {
             showNextNotification() {
-                if (this.timer) {
-                    clearTimeout(this.timer);
-                }
-                
                 if (this.notifications.length > 0) {
-                    setTimeout(() => {
-                        const notification = this.notifications[0];
-                        const timeout = notification.timeout ? notification.timeout : 5000;
+                    const showNotification = (notification) => {
+                        if (this.timer) {
+                            clearTimeout(this.timer);
+                        }
 
-                        this.active = {
-                            context: notification.context,
-                            message: notification.message
-                        };
+                        setTimeout(() => {
+                            const timeout = ((notification.timeout === undefined) || (notification.timeout === null)) ? 3000 : notification.timeout;
 
-                        this.$store.commit('pop_notification');
+                            this.$store.commit('set_notification', { notification });
 
-                        this.isShowing = true;
+                            this.$store.commit('pop_notification');
 
-                        this.timer = setTimeout(() => {
-                            this.isShowing = false;
-                        }, timeout);
-                    }, 500);
+                            this.isShowing = true;
+
+                            if (timeout > -1) {
+                                this.timer = setTimeout(() => {
+                                    this.isShowing = false;
+                                }, timeout);
+                            }
+                        }, 500);
+                    };
+
+                    const nextNotification = this.notifications[0];
+
+                    if (nextNotification.tag === this.notification.tag) {
+                        showNotification(nextNotification);
+                    } else {
+                        if (!this.isShowing) {
+                            showNotification(nextNotification);
+                        }
+                    }
                 }
             }
         }

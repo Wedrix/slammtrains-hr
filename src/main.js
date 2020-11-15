@@ -16,3 +16,9 @@ new Vue({
   vuetify,
   render: h => h(App)
 }).$mount('#app');
+
+Array.purify = function (array) {
+  return array.filter(element => {
+    return (element !== null) && (element !== undefined);
+  });
+};

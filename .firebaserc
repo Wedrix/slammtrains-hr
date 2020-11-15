@@ -1,5 +1,14 @@
 {
   "projects": {
     "default": "slammtrains-2d580"
+  },
+  "targets": {
+    "slammtrains-2d580": {
+      "hosting": {
+        "hr": [
+          "slammtrains-2d580"
+        ]
+      }
+    }
   }
 }

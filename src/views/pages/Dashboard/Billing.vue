@@ -43,7 +43,7 @@
                                         <div class="primary--text">Kindly select a plan or request an enterprise solution.</div>
                                     </div>
                                 </template>
-                                <template v-else-if="company.plan">
+                                <template v-else>
                                     <div class="text-h6">
                                         {{ company.plan.name }} 
                                         <span class="text-caption">(current plan)</span>
@@ -59,7 +59,7 @@
                                             </span>
                                         </div>
                                         <div>
-                                            <strong>{{ company.plan.courses.length }}</strong> licensed courses
+                                            <strong>{{ Array.purify(company.plan.courses).length }}</strong> licensed courses
                                         </div>
                                     </div>
 
@@ -73,7 +73,7 @@
 
                                     <div class="pb-2">
                                         <div 
-                                            v-for="course in company.plan.courses" 
+                                            v-for="course in Array.purify(company.plan.courses)" 
                                             :key="course.id" 
                                             class="text-body-2 py-1">
                                                 <v-icon small color="green">mdi-check</v-icon>
@@ -123,7 +123,7 @@
                                     <v-divider/>
                                     <v-card-text>
                                         <div 
-                                            v-for="course in plan.courses" 
+                                            v-for="course in Array.purify(plan.courses)" 
                                             :key="course.id" 
                                             class="text-body-2 py-2">
                                                 <v-icon small color="green">mdi-check</v-icon>
@@ -175,6 +175,8 @@
 
     import { mapState, mapGetters } from 'vuex';
 
+    import { cloneDeep } from 'lodash';
+
     export default {
         name: 'Billing',
         data() {
@@ -202,7 +204,7 @@
             otherPlans() {
                 const otherPlans = this.plans;
 
-                if (this.company.plan?.id) {
+                if (this.company.plan) {
                     return this.plans.filter(plan => {
                         return (plan.id !== this.company.plan.id);
                     });
@@ -245,7 +247,7 @@
                 this.isLoadingPlan = true;
 
                 if (this.changedPlan.billing) {
-                    const changedPlan = { ...this.changedPlan };
+                    const changedPlan = cloneDeep(this.changedPlan);
 
                     const unwatch = this.$watch('company.plan', async (plan) => {
                         if (plan.id === changedPlan.id) {
@@ -257,10 +259,10 @@
                 }
 
                 try {
-                    const setPlanForCompany = firebase.functions()
-                                                    .httpsCallable('setPlanForCompany');
+                    const setCompanyPlan = firebase.functions()
+                                                    .httpsCallable('setCompanyPlan');
 
-                    await setPlanForCompany({ planId: this.changedPlan.id });
+                    await setCompanyPlan({ planId: this.changedPlan.id });
                 } catch (error) {
                     const notification = {
                         message: error.message,
@@ -275,7 +277,7 @@
                 this.unsetChangedPlan();
             },
             async activatePlan() {
-                if (this.company.plan.billing) {
+                if (this.company.plan?.billing) {
 
                     const billing = this.company.plan.billing;
 
@@ -308,7 +310,7 @@
             unsetChangedPlan() {
                 this.changedPlanId = null;
                 this.isShowingCancelSubscriptionWarningDialog = false;
-            }
+            },
         },
         mounted() {
             this.initPaystackJS();

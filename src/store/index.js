@@ -19,10 +19,18 @@ firestoreOptions.serialize = snapshot => {
       });
 };
 
+import { cloneDeep } from 'lodash';
+
 Vue.use(Vuex);
 
 const init = {
   notifications: [],
+  notification: {
+    message: '',
+    context: '',
+    timeout: 3000,
+    tag: '',
+  },
   company: {
     hr: {
       id: '',
@@ -33,13 +41,20 @@ const init = {
       src: '',
     },
     name: '',
-    plan: null,
+    plan: {
+      id: '',
+      name: '',
+      courses: [],
+      licensedNumberOfEmployees: null,
+      description: '',
+      billing: null,
+    },
     subscription: null,
   },
 };
 
 export default new Vuex.Store({
-  state: { ...init },
+  state: cloneDeep(init),
   getters: {
     hr(state) {
       return state.company.hr;
@@ -88,25 +103,28 @@ export default new Vuex.Store({
         }
 
         return null;
-    },
+    }
   },
   mutations: {
     ...vuexfireMutations,
     push_notification({ notifications }, { notification }) {
-      notifications.splice(notifications.length, 1, notification);
+      notifications.splice(notifications.length, 1, Object.assign({}, init.notification, notification));
     },
     pop_notification({ notifications }) {
       notifications.splice(0, 1);
     },
+    set_notification(state, { notification }) {
+      state.notification = notification;
+    },
     clear_state(state) {
-      state = Object.assign(state, { ...init });
+      state = Object.assign(state, cloneDeep(init));
     }
   },
   actions: {
-    initialize: firestoreAction(async ({ bindFirestoreRef }, { uid }) => {
+    initialize: firestoreAction(async ({ bindFirestoreRef }, { user }) => {
       const companyId = (await firebase.firestore()
                                     .collection('companies')
-                                    .where('hr.uid','==',uid)
+                                    .where('hr.uid', '==', user.uid)
                                     .get()
                                     .then(companiesSnapshot => {
                                       const companySnapshot = companiesSnapshot.docs[0];

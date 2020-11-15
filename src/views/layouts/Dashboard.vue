@@ -263,9 +263,7 @@
         created() {
             firebase.auth().onAuthStateChanged(user => {
                 if (user) {
-                    const uid = user.uid;
-
-                    this.$store.dispatch('initialize', { uid });
+                    this.$store.dispatch('initialize', { user });
                 } else {
                     this.$store.dispatch('clear');
                 }

@@ -11,9 +11,11 @@
 
     import Slim from '@/components/Slim.vue';
 
+    import { cloneDeep } from 'lodash';
+
     const init = {
         src: '',
-        filename: '',
+        fileName: '',
         fullPath: ''
     };
 
@@ -38,7 +40,7 @@
         },
         data() {
             return {
-                image: { ...init },
+                image: cloneDeep(init),
 
                 options: {
                     ratio: this.aspectRatio,
@@ -66,7 +68,7 @@
                             const src = await uploadTask.snapshot.ref.getDownloadURL();
 
                             const image = {
-                                filename: file.name,
+                                fileName: file.name,
                                 fullPath: ref,
                                 src,
                             };
@@ -94,7 +96,7 @@
                                     this.$store.commit('push_notification', { notification });
                                 });
 
-                        this.image = { ...init, };
+                        this.image = cloneDeep(init);
                     },
                     serviceFormat: 'file',
                     instantEdit: true,

@@ -114,7 +114,7 @@ const dashboardValidation = (to, from, next) => {
   firebase.auth().onAuthStateChanged(user => {
     if (user) {
       user.getIdTokenResult().then(async result => {
-        if (result.claims.accessLevel === 'admin' || result.claims.accessLevel === 'hr') {
+        if (result.claims.accessLevel === 'hr') {
           if (!user.emailVerified) {
             next('/confirm_email');
 
