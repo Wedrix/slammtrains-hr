@@ -5,9 +5,22 @@ export default {
     data() {
         return {
             matchesPassword: value => (value === this.password) || 'Kindly ensure the passwords match',
-            required: value => !!value || 'This field is required',
+            required: value => ((value !== undefined) && (value !== null) && (value !== '')) || 'This field is required',
+            nonEmpty: value => (value.length > 0) || 'This field requires at least one value',
             isEmail: value => /.+@.+\..+/.test(value) || 'This email is invalid',
-            isPhoneNumber: value => this.isValidPhoneNumber(value) || 'This phone number is invalid for this region'
+            isPhoneNumber: value => this.isValidPhoneNumber(value) || 'This phone number is invalid for this region',
+            min: min => {
+                return value => (value >= min) || `The min value is ${min}`;
+            },
+            minFileSize: minFileSize => {
+                return (file) => {
+                    if (file.size > (minFileSize * 1000000)) {
+                        return `The file "${file.name}" should be less than ${minFileSize} MB!`;
+                    }
+
+                    return true;
+                }
+            }
         };
     },
     methods: {

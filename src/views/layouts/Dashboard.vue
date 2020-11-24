@@ -4,12 +4,12 @@
             v-model="isShowingNavDrawer"
             app>
                 <v-list>
-                    <v-list-item class="pa-1">
+                    <v-list-item class="py-1">
                         <v-list-item-avatar tile>
-                            <v-img v-if="company.logo" :src="company.logo.src"></v-img>
-                            <v-btn v-else fab :elevation="0" small>
+                            <v-img v-if="company.logo" :src="company.logo.src"/>
+                            <v-avatar v-else color="primary">
                                 {{ getInitials(company.name) }}
-                            </v-btn>
+                            </v-avatar>
                         </v-list-item-avatar>
 
                         <v-list-item-title>{{ company.name }}</v-list-item-title>
@@ -23,7 +23,7 @@
                         :to="navItem.to"
                         color="primary"
                         link
-                        exact>
+                        :exact="navItem.to === '/dashboard'">
                             <v-list-item-icon>
                                 <v-icon>{{ navItem.icon }}</v-icon>
                             </v-list-item-icon>
@@ -37,7 +37,7 @@
 
                     <v-list-group
                         prepend-icon="mdi-cog-outline"
-                        group="/settings/i"
+                        group="/dashboard/settings"
                         no-action>
                             <template v-slot:activator>
                                 <v-list-item-title>Settings</v-list-item-title>
@@ -50,8 +50,7 @@
                                 :key="navItem.title" 
                                 :to="navItem.to"
                                 color="primary"
-                                link
-                                exact>
+                                link>
                                     <v-list-item-icon>
                                         <v-icon>{{ navItem.icon }}</v-icon>
                                     </v-list-item-icon>
@@ -132,12 +131,19 @@
                 <v-alert :value="billingAlert.show"
                     dismissible
                     color="secondary"
-                    border="left"
-                    elevation="2"
                     class="mx-lg-6"
-                    colored-border>
+                    type="error"
+                    elevation="2"
+                    colored-border
+                    border="left"
+                    dense>
                         {{ billingAlert.message }}
-                        <v-btn color="secondary" class="ml-4" to="/dashboard/settings/billing">Manage Billing</v-btn>
+                        <v-btn 
+                            color="secondary"
+                            class="ml-4" 
+                            to="/dashboard/settings/billing">
+                                Manage Billing
+                        </v-btn>
                 </v-alert>
 
                 <router-view/>
@@ -212,8 +218,9 @@
             ...mapGetters([
                 'hr',
                 'subscriptionHasExpired',
-                'planNotSet'
-            ]),
+                'planNotSet',
+                'unsubscribed',
+            ])
         },
         watch: {
             $route: {
@@ -224,12 +231,20 @@
                             message: 'Your subscription has expired. Kindly renew it or pick another plan.',
                             show: true,
                         };
-                    } else if (this.planNotSet && (this.$route.path !== '/dashboard/settings/billing')) {
+                    } 
+                    else if (this.planNotSet && (this.$route.path !== '/dashboard/settings/billing')) {
                         this.billingAlert = {
                             message: 'Unfortunately, the plan you selected is no longer available. Kindly pick another plan or request a custom solution.',
                             show: true,
                         };
-                    } else {
+                    } 
+                    else if (this.unsubscribed && (this.$route.path !== '/dashboard/settings/billing')) {
+                        this.billingAlert = {
+                            message: 'Your current plan is Inactive. Kindly subscribe to gain full access.',
+                            show: true,
+                        };
+                    }
+                    else {
                         this.billingAlert.show = false;
                     }
                 }

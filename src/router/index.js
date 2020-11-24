@@ -91,22 +91,44 @@ const dashboardRoutes = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('../views/pages/Dashboard/Home.vue')
+    component: () => import('../views/pages/Dashboard/Home.vue'),
   },
   {
     path: 'employees',
-    name: 'Employees',
-    component: () => import('../views/pages/Dashboard/Employees.vue')
+    component: () => import('../views/pages/Dashboard/Employees.vue'),
+    children: [
+      {
+        path: '/',
+        name: 'EmployeesIndex',
+        component: () => import('../views/pages/Dashboard/Employees/Index.vue'),
+      },
+    ]
   },
   {
     path: 'courses',
-    name: 'Courses',
-    component: () => import('../views/pages/Dashboard/Courses.vue')
+    component: () => import('../views/pages/Dashboard/Courses.vue'),
+    children: [
+      {
+        path: '/',
+        name: 'CoursesIndex',
+        component: () => import('../views/pages/Dashboard/Courses/Index.vue'),
+      },
+      {
+        path: 'plan-courses',
+        name: 'PlanCourses',
+        component: () => import('../views/pages/Dashboard/Courses/IndexPlanCourses.vue'),
+      },
+      {
+        path: 'request',
+        name: 'RequestCourse',
+        component: () => import('../views/pages/Dashboard/Courses/Request.vue'),
+      },
+    ],
   },
   {
     path: 'settings/billing',
     name: 'Billing',
-    component: () => import('../views/pages/Dashboard/Billing.vue')
+    component: () => import('../views/pages/Dashboard/Billing.vue'),
   }
 ];
 

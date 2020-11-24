@@ -9,7 +9,9 @@
   },
   "dependencies": {
     "axios": "^0.20.0",
+    "case": "^1.6.3",
     "core-js": "^3.6.5",
+    "debounce": "^1.2.0",
     "firebase": "^7.18.0",
     "google-libphonenumber": "^3.2.12",
     "lodash": "^4.17.20",

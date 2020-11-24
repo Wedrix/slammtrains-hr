@@ -17,10 +17,10 @@
             height="60">  
                 <v-tabs v-model="tab">
                     <v-tab>Plans</v-tab>
-                    <v-tab>Payments</v-tab>
+                    <v-tab>Transactions</v-tab>
                 </v-tabs>
         </v-toolbar>
-        <v-sheet color="transparent">
+        <template v-if="tab === 0">
             <v-row>
                 <v-col cols="12" md="3">
                     <v-card 
@@ -135,36 +135,74 @@
                     </v-card>
                 </v-col>
             </v-row>
-        </v-sheet>
-        <v-dialog
-            v-model="isShowingCancelSubscriptionWarningDialog"
-            max-width="600px"
-            persistent>
-                <v-card>
-                    <v-card-title class="headline">WARNING!</v-card-title>
+            <v-dialog
+                v-model="isShowingCancelSubscriptionWarningDialog"
+                max-width="600px"
+                persistent>
+                    <v-card>
+                        <v-card-title class="headline">WARNING!</v-card-title>
 
-                    <v-card-text>
-                        Changing your plan cancels any active subscription. This means, in case you change your
-                        mind and decide to revert to your current plan, you will have to pay the price in full.
-                    </v-card-text>
+                        <v-card-text>
+                            Changing your plan cancels any active subscription. This means, in case you change your
+                            mind and decide to revert to your current plan, you will have to pay the price in full.
+                        </v-card-text>
 
-                    <v-card-actions>
-                        <v-spacer/>
+                        <v-card-actions>
+                            <v-spacer/>
 
-                        <v-btn 
-                            text
-                            @click="unsetChangedPlan()">
-                                Cancel
-                        </v-btn>
+                            <v-btn 
+                                text
+                                @click="unsetChangedPlan()">
+                                    Cancel
+                            </v-btn>
 
-                        <v-btn
-                            color="primary"
-                            @click="changePlan()">
-                                Proceed
-                        </v-btn>
-                    </v-card-actions>
-                </v-card>
-        </v-dialog>
+                            <v-btn
+                                color="primary"
+                                @click="changePlan()">
+                                    Proceed
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
+            </v-dialog>
+        </template>
+        <template v-if="tab === 1">
+            <v-row>
+                <v-col cols="12">
+                    <v-data-table
+                        :headers="transactionsHeaders"
+                        :items="transactions"
+                        :loading="isLoadingTransactions"
+                        :server-items-length="transactionsTotalCount"
+                        :options.sync="pagination"
+                        class="elevation-1"
+                        disable-sort>
+                            <template v-slot:[`item.amount`]="{ item }">
+                                <span class="font-weight-bold">
+                                    {{ item.currency }}
+                                    {{ item.amount / 100 }}
+                                </span>
+                            </template>
+                            <template v-slot:[`item.status`]="{ item }">
+                                <span 
+                                    class="font-weight-medium" 
+                                    :class="{ 
+                                            'green--text text--darken-2': item.status === 'success',
+                                            'purple--text text--darken-2': item.status === 'abandoned',
+                                            'red--text text--darken-2': item.status === 'failed',
+                                        }">
+                                        {{ item.status }}
+                                </span>
+                            </template>
+                            <template v-slot:[`item.channel`]="{ item }">
+                                {{ item.channel | inLowerCase }}
+                            </template>
+                            <template v-slot:[`item.createdAt`]="{ item }">
+                                {{ formatDate(item.createdAt, 'verbose') }}
+                            </template>
+                    </v-data-table>
+                </v-col>
+            </v-row>
+        </template>
     </v-sheet>
 </template>
 
@@ -172,6 +210,9 @@
     import firebase from '@/firebase';
     import 'firebase/firestore';
     import 'firebase/functions';
+
+    import moment from 'moment';
+    import Case from 'case';
 
     import { mapState, mapGetters } from 'vuex';
 
@@ -184,9 +225,43 @@
                 tab: 0,
                 plans: [],
                 isLoadingPlan: false,
-
                 changedPlan: null,
                 isShowingCancelSubscriptionWarningDialog: false,
+
+                transactionsHeaders: [
+                    {
+                        text: 'ID',
+                        value: 'id',
+                    },
+                    {
+                        text: 'Reference',
+                        value: 'reference',
+                    },
+                    {
+                        text: 'Amount',
+                        value: 'amount',
+                    },
+                    { 
+                        text: 'Status', 
+                        value: 'status',
+                    },
+                    { 
+                        text: 'Channel', 
+                        value: 'channel',
+                    },
+                    {
+                        text: 'Created At',
+                        value: 'createdAt',
+                    },
+                ],
+                transactions: [],
+                pagination: {
+                    page: 1,
+                    itemsPerPage: 10,
+                },
+                transactionsTotalCount: 0,
+
+                isLoadingTransactions: false,
             };
         },
         computed: {
@@ -220,7 +295,14 @@
                         this.isLoadingPlan = false;
                     }
                 }
-            }
+            },
+            pagination: {
+                immediate: true,
+                deep: true,
+                async handler() {
+                    await this.loadTransactions();
+                }
+            },
         },
         methods: {
             initPaystackJS() {
@@ -311,6 +393,38 @@
                 this.changedPlanId = null;
                 this.isShowingCancelSubscriptionWarningDialog = false;
             },
+            async loadTransactions() {
+                this.isLoadingTransactions = true;
+
+                try {
+                    const fetchCompanyTransactions = firebase.functions()
+                                                            .httpsCallable('fetchCompanyTransactions');
+
+                    const transactionsPaginationData = {
+                        perPage: this.pagination.itemsPerPage,
+                        page: this.pagination.page,
+                    };
+
+                    const transactionsData = (await fetchCompanyTransactions({ transactionsPaginationData })).data;
+
+                    this.transactions = transactionsData.data;
+                    this.transactionsTotalCount = transactionsData.meta.total;
+                } catch (error) {
+                    const notification = {
+                        message: error.message,
+                        context: 'error',
+                    };
+
+                    this.$store.commit('push_notification', { notification });
+                }
+
+                this.isLoadingTransactions = false;
+            },
+            formatDate(timestamp, format) {
+                if (format === 'verbose') {
+                    return moment(timestamp).format("MMMM Do, YYYY h:mm A");
+                }
+            },
         },
         mounted() {
             this.initPaystackJS();
@@ -318,5 +432,19 @@
         firestore: {
             plans: firebase.firestore().collection('plans'),
         },
+        filters: {
+            inLowerCase(string) {
+                return Case.lower(string);
+            }
+        }
     };
 </script>
+
+<style scoped>
+    .table-top {
+        border-bottom: thin solid rgba(0, 0, 0, 0.12);
+    }
+    .table-bottom {
+        border-top: thin solid rgba(0, 0, 0, 0.12);
+    }
+</style>

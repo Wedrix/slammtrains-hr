@@ -62,9 +62,10 @@
                                     </v-col>
                                 </v-row>
 
-                                <v-select v-model="numberOfEmployees" :items="settings.employeeRanges"
-                                    label="Number Of Employees"
-                                    name="numberOfEmployees"
+                                <v-select v-model="size" 
+                                    :items="settings.companySizes"
+                                    label="Size (No. Of Employees)"
+                                    name="size"
                                     :rules="[required]"
                                     required/>
 
@@ -196,7 +197,7 @@
                     input: null,
                     formatted: null,
                 },
-                numberOfEmployees: null,
+                size: null,
                 industry: null,
                 addressLine1: null,
                 addressLine2: null,
@@ -211,7 +212,7 @@
                 },
                 plans: [],
                 settings: {
-                    employeeRanges: [],
+                    companySizes: [],
                     industries: [],
                 },
                 countries: [],
@@ -248,7 +249,7 @@
                         name: this.name,
                         email: this.email,
                         phoneNumber: this.phoneNumber.formatted,
-                        numberOfEmployees: this.numberOfEmployees,
+                        size: this.size,
                         industry: this.industry,
                         address: {
                             addressLine1: this.addressLine1,
