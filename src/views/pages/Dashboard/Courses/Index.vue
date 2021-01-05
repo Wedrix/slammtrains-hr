@@ -85,7 +85,7 @@
                         </v-col>
                     </v-row>
                 </template>
-                <template v-slot:footer v-if="(pagination.itemsTotalCount !== courses.length) && !isLoadingCourses">
+                <template v-slot:footer v-if="(pagination.itemsTotalCount > courses.length) && !isLoadingCourses">
                     <div class="table-bottom px-6">
                         <v-row>
                             <v-col cols="12">
@@ -129,6 +129,7 @@
             sortBy: 'createdAt',
             sortDesc: true,
             lastDocument: null,
+            itemsTotalCount: 0,
         },
     };
 
@@ -141,9 +142,6 @@
             return {
                 courses: [],
                 pagination: cloneDeep(init.pagination),
-                coursesCounter: {
-                    totalCount: 0,
-                },
 
                 isLoadingCourses: false,
                 isReloadingCourses: false,
@@ -160,6 +158,9 @@
                                 .collection('courses')
                                 .orderBy(sortBy, sortOrder)
                                 .limit(limit);
+            },
+            coursesTotalCount() {
+                return this.$store.state.documentCounters.courses;
             },
             ...mapState([
                 'company',
@@ -201,7 +202,7 @@
 
                 this.courses = await this.fetchCourses(this.query);
 
-                this.pagination.itemsTotalCount = this.coursesCounter.totalCount;
+                this.pagination.itemsTotalCount = this.coursesTotalCount;
 
                 this.isLoadingCourses = false;
             },
@@ -266,8 +267,5 @@
                 return false;
             },
         },
-        firestore: {
-            coursesCounter: firebase.firestore().doc('__documentCounters/courses'),
-        }
     };
 </script>

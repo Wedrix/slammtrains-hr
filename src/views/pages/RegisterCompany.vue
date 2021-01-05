@@ -211,10 +211,6 @@
                     name: null,
                 },
                 plans: [],
-                settings: {
-                    companySizes: [],
-                    industries: [],
-                },
                 countries: [],
                 isUploadingImage: false,
                 isRegistering: false,
@@ -224,6 +220,11 @@
                     context: null,
                 },
             };
+        },
+        computed: {
+            settings() {
+                return this.$store.state.settings.companyRegistration;
+            },
         },
         methods: {
             validate() {
@@ -281,7 +282,6 @@
         },
         firestore: {
             plans: firebase.firestore().collection('plans'),
-            settings: firebase.firestore().collection('settings').doc('companyRegistrationPage'),
         },
         watch: {
             plans(plans) {

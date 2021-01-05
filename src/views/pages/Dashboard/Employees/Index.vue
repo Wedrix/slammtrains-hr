@@ -96,24 +96,7 @@
                 <template v-slot:top>
                     <div class="table-top px-6">
                         <v-row align="center">
-                            <v-col cols="12" md="9">
-                                <v-btn 
-                                    outlined
-                                    color="secondary" 
-                                    class="mr-4"
-                                    @click="isShowingAddEmployeeDialog = true;">
-                                        <v-icon left small>mdi-plus</v-icon>
-                                        Add An Employee
-                                </v-btn>
-                                <v-btn 
-                                    outlined
-                                    color="secondary" 
-                                    class="mr-4"
-                                    @click="isShowingImportEmployeesDialog = true;">
-                                        <v-icon left small>mdi-file-import-outline</v-icon>
-                                        Import Employees
-                                </v-btn>
-                            </v-col>
+                            <v-col cols="12" md="9"></v-col>
                             <v-col cols="12" md="3" class="d-flex align-center justify-end">
                                 <v-tooltip left>
                                     <template v-slot:activator="{ on, attrs }">
@@ -138,7 +121,7 @@
                         </v-row>
                     </div>
                 </template>
-                <template v-slot:footer v-if="(pagination.itemsTotalCount !== employees.length) && !isLoadingEmployees">
+                <template v-slot:footer v-if="(pagination.itemsTotalCount > employees.length) && !isLoadingEmployees">
                     <div class="table-bottom px-6">
                         <v-row>
                             <v-col cols="12">
@@ -154,102 +137,6 @@
                     </div>
                 </template>
         </v-data-table>
-        <v-dialog 
-            v-model="isShowingAddEmployeeDialog" 
-            max-width="600" 
-            persistent>
-                <v-card>
-                    <v-form @submit.prevent="addEmployee()" ref="addEmployeeForm">
-                        <v-card-title>
-                            <span class="headline">Add An Employee</span>
-                            <v-spacer/>
-                            <v-btn 
-                                color="primary" 
-                                @click="isShowingAddEmployeeDialog = false;"
-                                icon>
-                                    <v-icon>mdi-close</v-icon>
-                            </v-btn>
-                        </v-card-title>
-                        <v-card-text>
-                            <v-row>
-                                <v-col cols="12">
-                                    <v-text-field 
-                                        v-model="newEmployee.name"
-                                        label="Employee Name" 
-                                        :rules="[required]"
-                                        required/>
-                                </v-col>
-                                <v-col cols="12">
-                                    <v-text-field 
-                                        v-model="newEmployee.email"
-                                        label="Employee Email" 
-                                        :rules="[required]"
-                                        type="email"
-                                        required/>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                        <v-card-actions>
-                            <v-spacer/>
-                            <v-btn color="primary" type="submit" dark :loading="isAddingEmployee">Add Employee</v-btn>
-                        </v-card-actions>
-                    </v-form>
-                </v-card>
-        </v-dialog>
-        <v-dialog
-            v-model="isShowingImportEmployeesDialog"
-            max-width="600"
-            persistent>
-                <v-card>
-                    <v-form @submit.prevent="importEmployees()" ref="importEmployeesForm">
-                        <v-card-title>
-                            <span class="headline">Import Employees (CSV)</span>
-                            <v-spacer/>
-                            <v-btn 
-                                color="primary" 
-                                @click="isShowingImportEmployeesDialog = false;" 
-                                icon>
-                                    <v-icon>mdi-close</v-icon>
-                            </v-btn>
-                        </v-card-title>
-                        <v-alert
-                            color="primary"
-                            dark
-                            icon="mdi-help-circle-outline"
-                            border="left"
-                            prominent>
-                                <ul>
-                                    <li>Only the CSV format is supported.</li> 
-                                    <li>You may upload multiple fies at a go.</li> 
-                                    <li>The maximum file size allowed is 10 MB.</li>
-                                    <li>The notification panel at the bottom right of the page indicates the upload progress for each of the files.</li> 
-                                    <li>Kindly refrain from closing the tab or reloading the page until all the files have been uploaded.</li>
-                                    <li>The time it takes to complete the upload process depends on the number of records in the files.</li>
-                                    <li>The process may take some minutes to complete.</li> 
-                                    <li>
-                                        <a class="white--text font-weight-bold" style="text-decoration: underline;" :href="sampleCSVFileLink">Download</a> the sample CSV for the expected format.
-                                    </li>
-                                </ul>
-                        </v-alert>
-                        <v-card-text>
-                            <v-file-input 
-                                v-model="employeesCSVs"
-                                :rules="[nonEmpty, minFileSize(10)]"
-                                :key="CSVUploadInputKey" 
-                                multiple 
-                                counter 
-                                show-size 
-                                size-displaying 
-                                small-chips 
-                                accept=".csv"/>
-                        </v-card-text>
-                        <v-card-actions>
-                            <v-spacer/>
-                            <v-btn color="primary" type="submit" dark :loading="isImportingEmployees">Upload & Import</v-btn>
-                        </v-card-actions>
-                    </v-form>
-                </v-card>
-        </v-dialog>
     </div>
 </template>
 
@@ -257,11 +144,6 @@
     import firebase from '@/firebase';
     import 'firebase/functions';
     import 'firebase/firestore';
-    import 'firebase/storage';
-
-    import validators from '@/mixins/validators';
-
-    import { v4 as uuidv4 } from 'uuid';
 
     import Case from 'case';
     import { cloneDeep } from 'lodash';
@@ -272,10 +154,6 @@
     import moment from 'moment';
 
     const init = {
-        newEmployee: {
-            email: '',
-            name: '',
-        },
         search: {
             field: {
                 text: 'Name',
@@ -288,12 +166,12 @@
             sortBy: 'createdAt',
             sortDesc: true,
             lastDocument: null,
+            itemsTotalCount: 0,
         },
     };
 
     export default {
-        name: 'Employees',
-        mixins: [validators],
+        name: 'EmployeesIndex',
         data() {
             return {
                 headers: [
@@ -330,16 +208,6 @@
                 isReloadingEmployees: false,
                 isRemovingEmployees: {},
                 isRegeneratingEmployeesSignInLink: {},
-
-                newEmployee: cloneDeep(init.newEmployee),
-                isAddingEmployee: false,
-                isShowingAddEmployeeDialog: false,
-
-                isShowingImportEmployeesDialog: false,
-                employeesCSVs: [],
-                CSVUploadInputKey: 0,
-                isImportingEmployees: false,
-                sampleCSVFileLink: 'https://firebasestorage.googleapis.com/v0/b/slammtrains-2d580.appspot.com/o/Employees%20Sample.csv?alt=media&token=50c6dafe-d9e6-46ff-af83-1c793b69b95d',
             };
         },
         computed: {
@@ -361,7 +229,7 @@
                 }
 
                 return null;
-            }
+            },
         },
         watch: {
             query: {
@@ -490,115 +358,6 @@
                 }
 
                 this.$set(this.isRemovingEmployees, employee.id, false);
-            },
-            async addEmployee() {
-                this.isAddingEmployee = true;
-
-                const employeeData = cloneDeep(this.newEmployee);
-                
-                try {
-                    const addCompanyEmployee = firebase.functions()
-                                                    .httpsCallable('addCompanyEmployee');
-
-                    await addCompanyEmployee({ employeeData });
-
-                    const notification = {
-                        message: 'Employee Successfully Added',
-                        context: 'success',
-                    };
-
-                    this.$store.commit('push_notification', { notification });
-                } catch (error) {
-                    const notification = {
-                        message: error.message,
-                        context: 'error',
-                    };
-
-                    this.$store.commit('push_notification', { notification });
-                }
-
-                this.isAddingEmployee = false;
-                this.newEmployee = cloneDeep(init.newEmployee);
-                this.isShowingAddEmployeeDialog = false;
-                this.$refs.addEmployeeForm.resetValidation();
-            },
-            async importEmployees() {
-                this.isImportingEmployees = true;
-
-                try {
-                    await Promise.all(
-                        this.employeesCSVs.map(async (file, index) => {
-                            await this.uploadFile(file, `companies/${this.company.id}/employees`);                 
-                        })
-                    );
-                } catch (error) {
-                    const notification = {
-                        message: error.message,
-                        context: 'error',
-                    };
-
-                    this.$store.commit('push_notification', { notification });
-                }
-
-                this.isLoadingEmployees = true;
-
-                this.employeesCSVs = [];
-                this.isShowingImportEmployeesDialog = false;
-                this.isImportingEmployees = false;
-                this.$refs.importEmployeesForm.resetValidation();
-            },
-            async uploadFile(file, storagePath) {
-                return new Promise((resolve, reject) => {
-                    const ref = `${storagePath}/${uuidv4()}_${file.name}`;
-                    const storageRef = firebase.storage().ref();
-
-                    const metadata = {
-                        contentType: file.type,
-                    };
-
-                    const uploadTask = storageRef.child(ref).put(file, metadata);
-
-                    uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, snapshot => {
-                        const percentUpload = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-
-                        this.$store.commit('push_notification', { 
-                            notification: {
-                                message: `Uploading "${file.name}" (${percentUpload}%)`,
-                                context: 'info',
-                                timeout: -1,
-                                tag: 'upload',
-                            }
-                        });
-                    }, error => {
-                        this.$store.commit('push_notification', { 
-                            notification: {
-                                message: `Error uploading "${file.name}"`,
-                                context: 'error',
-                                tag: 'upload',
-                            }
-                        });
-
-                        reject(error);
-                    }, async () => {
-                        this.$store.commit('push_notification', { 
-                            notification: {
-                                message: `Successfully uploaded "${file.name}"`,
-                                context: 'success',
-                                tag: 'upload',
-                            }
-                        });
-
-                        const downloadUrl = await uploadTask.snapshot.ref.getDownloadURL();
-
-                        const upload = {
-                            fileName: file.name,
-                            fullPath: ref,
-                            src: downloadUrl,
-                        }
-                        
-                        resolve(upload);
-                    });
-                });
             },
             getEmployeeTotalCoursesEnrolled(enrolledCourses) {
                 const enrolledCoursesIds = [];

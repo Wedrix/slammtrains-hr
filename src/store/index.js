@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 
 import firebase from '@/firebase';
+import 'firebase/functions';
 import 'firebase/firestore';
 
 import moment from 'moment';
@@ -50,6 +51,22 @@ const init = {
       billing: null,
     },
     subscription: null,
+  },
+  settings: {
+    business: {
+      name: '',
+      supportEmail: '',
+    },
+    companyRegistration: {
+      companySizes: [],
+      industries: [],
+    },
+    course: {
+      daysToOld: null,
+    },
+  },
+  documentCounters: {
+    courses: 0,
   },
 };
 
@@ -121,23 +138,24 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    initialize: firestoreAction(async ({ bindFirestoreRef }, { user }) => {
-      const companyId = (await firebase.firestore()
-                                    .collection('companies')
-                                    .where('hr.uid', '==', user.uid)
-                                    .get()
-                                    .then(companiesSnapshot => {
-                                      const companySnapshot = companiesSnapshot.docs[0];
+    initialize: firestoreAction(async ({ bindFirestoreRef }) => {
+      const resolveHRCompany = firebase.functions()
+                                        .httpsCallable('resolveHRCompany');
 
-                                      return companySnapshot ? companySnapshot.id : null;
-                                    }));
+      const company = (await resolveHRCompany()).data.company;
+      
+      const companyRef = firebase.firestore()
+                                .doc(`companies/${company.id}`);
 
-      if (companyId) {
-        const companyRef = firebase.firestore()
-                                  .doc(`companies/${companyId}`);
-  
-        return bindFirestoreRef('company', companyRef, { wait: true });
-      }
+      const settingsRef = firebase.firestore()
+                                  .doc(`settings/index`);
+
+      const documentCountersRef = firebase.firestore()
+                                          .doc('documentCounters/index');
+
+      await bindFirestoreRef('company', companyRef, { wait: true });
+      await bindFirestoreRef('settings', settingsRef, { wait: true });
+      await bindFirestoreRef('documentCounters', documentCountersRef, { wait: true });
     }),
     clear({ commit }) {
       commit('clear_state');

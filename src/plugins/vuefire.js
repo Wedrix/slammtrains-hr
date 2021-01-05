@@ -9,6 +9,6 @@ const serialize = snapshot => {
             configurable: true, 
             writable: true 
         });
-}
+};
 
 Vue.use(firestorePlugin, { serialize });

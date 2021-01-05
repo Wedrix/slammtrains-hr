@@ -35,25 +35,25 @@ const authRoutes = [
   {
     path: '/signin',
     name: 'SignInPage',
-    component: () => import('../views/pages/SignIn.vue'),
+    component: () => import('@/views/pages/SignIn.vue'),
     beforeEnter: authValidation
   },
   {
     path: '/signup',
     name: 'SignUpPage',
-    component: () => import('../views/pages/SignUp.vue'),
+    component: () => import('@/views/pages/SignUp.vue'),
     beforeEnter: authValidation
   },
   {
     path: '/register_company',
     name: 'CompanyRegistrationPage',
-    component: () => import('../views/pages/RegisterCompany.vue'),
+    component: () => import('@/views/pages/RegisterCompany.vue'),
     beforeEnter: registerValidation
   },
   {
     path: '/confirm_email',
     name: 'ConfirmEmailPage',
-    component: () => import('../views/pages/ConfirmEmail.vue'),
+    component: () => import('@/views/pages/ConfirmEmail.vue'),
     beforeEnter: (to, from, next) => {
       firebase.auth().onAuthStateChanged(user => {
         if (user) {
@@ -91,44 +91,65 @@ const dashboardRoutes = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('../views/pages/Dashboard/Home.vue'),
+    component: () => import('@/views/pages/Dashboard/Home.vue'),
   },
   {
     path: 'employees',
-    component: () => import('../views/pages/Dashboard/Employees.vue'),
+    component: () => import('@/views/pages/Dashboard/Employees.vue'),
     children: [
       {
         path: '/',
         name: 'EmployeesIndex',
-        component: () => import('../views/pages/Dashboard/Employees/Index.vue'),
+        component: () => import('@/views/pages/Dashboard/Employees/Index.vue'),
+      },
+      {
+        path: 'import',
+        name: 'EmployeesImport',
+        component: () => import('@/views/pages/Dashboard/Employees/Import.vue'),
+      },
+      {
+        path: 'add',
+        name: 'AddEmployee',
+        component: () => import('@/views/pages/Dashboard/Employees/Add.vue'),
       },
     ]
   },
   {
     path: 'courses',
-    component: () => import('../views/pages/Dashboard/Courses.vue'),
+    component: () => import('@/views/pages/Dashboard/Courses.vue'),
     children: [
       {
         path: '/',
         name: 'CoursesIndex',
-        component: () => import('../views/pages/Dashboard/Courses/Index.vue'),
+        component: () => import('@/views/pages/Dashboard/Courses/Index.vue'),
       },
       {
         path: 'plan-courses',
         name: 'PlanCourses',
-        component: () => import('../views/pages/Dashboard/Courses/IndexPlanCourses.vue'),
+        component: () => import('@/views/pages/Dashboard/Courses/IndexPlanCourses.vue'),
       },
       {
         path: 'request',
         name: 'RequestCourse',
-        component: () => import('../views/pages/Dashboard/Courses/Request.vue'),
+        component: () => import('@/views/pages/Dashboard/Courses/Request.vue'),
       },
     ],
   },
   {
     path: 'settings/billing',
-    name: 'Billing',
-    component: () => import('../views/pages/Dashboard/Billing.vue'),
+    component: () => import('@/views/pages/Dashboard/Billing.vue'),
+    children: [
+      {
+        path: '/',
+        name: 'BillingPlans',
+        component: () => import('@/views/pages/Dashboard/Billing/Plans.vue'),
+      },
+      {
+        path: 'transactions',
+        name: 'BillingTransactions',
+        component: () => import('@/views/pages/Dashboard/Billing/Transactions.vue'),
+      },
+    ],
   }
 ];
 
@@ -170,7 +191,7 @@ const defaultRoutes = [
   {
     path: '/',
     name: 'HomePage',
-    component: () => import('../views/pages/Home.vue')
+    component: () => import('@/views/pages/Home.vue')
   }
 ];
 

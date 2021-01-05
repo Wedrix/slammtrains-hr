@@ -1,36 +1,31 @@
 <template>
     <v-card>
-        <v-form @submit.prevent="addCourseRequest()" ref="courseRequestForm">
+        <v-form @submit.prevent="addEmployee()" ref="addEmployeeForm">
             <v-card-title>
-                <span class="headline primary--text">Request A Course</span>
+                <span class="headline primary--text">Add An Employee</span>
             </v-card-title>
             <v-card-text>
                 <v-row>
                     <v-col cols="12">
                         <v-text-field 
-                            v-model="courseRequest.courseName"
-                            label="Course Name" 
+                            v-model="newEmployee.name"
+                            label="Employee Name" 
                             :rules="[required]"
                             required/>
                     </v-col>
                     <v-col cols="12">
-                        <v-textarea
-                            v-model="courseRequest.details"
-                            label="Request Details"
+                        <v-text-field 
+                            v-model="newEmployee.email"
+                            label="Employee Email" 
                             :rules="[required]"
+                            type="email"
                             required/>
                     </v-col>
                 </v-row>
             </v-card-text>
             <v-card-actions>
                 <v-spacer/>
-                <v-btn 
-                    color="primary" 
-                    type="submit" 
-                    dark 
-                    :loading="isAddingCourseRequest">
-                        Request Course
-                </v-btn>
+                <v-btn color="primary" type="submit" dark :loading="isAddingEmployee">Add Employee</v-btn>
             </v-card-actions>
         </v-form>
     </v-card>
@@ -41,50 +36,51 @@
     import 'firebase/functions';
 
     import validators from '@/mixins/validators';
-    
+
     import { cloneDeep } from 'lodash';
 
     const init = {
-        courseRequest: {
-            courseName: '',
-            details: '',
+        newEmployee: {
+            email: '',
+            name: '',
         },
     };
 
     export default {
-        name: 'BroadcastEmail',
+        name: 'AddEmployee',
         mixins: [validators],
         data() {
             return {
-                courseRequest: cloneDeep(init.courseRequest),
-                isAddingCourseRequest: false,
+                newEmployee: cloneDeep(init.newEmployee),
+                isAddingEmployee: false,
             };
         },
         methods: {
-            async addCourseRequest() {
-                if (!this.$refs.courseRequestForm.validate()) {
+            async addEmployee() {
+                if (!this.$refs.addEmployeeForm.validate()) {
                     return;
                 }
 
-                this.isAddingCourseRequest = true;
+                this.isAddingEmployee = true;
 
-                const courseRequestData = cloneDeep(this.courseRequest);
+                const employeeData = cloneDeep(this.newEmployee);
                 
                 try {
-                    const requestCourse = firebase.functions()
-                                                        .httpsCallable('requestCourse');
+                    const addCompanyEmployee = firebase.functions()
+                                                    .httpsCallable('addCompanyEmployee');
 
-                    await requestCourse({ courseRequestData });
+                    await addCompanyEmployee({ employeeData });
 
                     const notification = {
-                        message: 'Your Course Request Has Been Received.',
+                        message: 'Employee Successfully Added',
                         context: 'success',
                     };
 
                     this.$store.commit('push_notification', { notification });
-
-                    this.courseRequest = cloneDeep(init.courseRequest);
-                    this.$refs.courseRequestForm.resetValidation();
+                    
+                    this.newEmployee = cloneDeep(init.newEmployee);
+                    this.$refs.addEmployeeForm.resetValidation();
+                    this.$router.push('/dashboard/employees');
                 } catch (error) {
                     const notification = {
                         message: error.message,
@@ -94,7 +90,7 @@
                     this.$store.commit('push_notification', { notification });
                 }
 
-                this.isAddingCourseRequest = false;
+                this.isAddingEmployee = false;
             },
         },
     };

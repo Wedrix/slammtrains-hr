@@ -4,7 +4,7 @@
             v-model="isShowingNavDrawer"
             app>
                 <v-list>
-                    <v-list-item class="py-1">
+                    <v-list-item>
                         <v-list-item-avatar tile>
                             <v-img v-if="company.logo" :src="company.logo.src"/>
                             <v-avatar v-else color="primary">
@@ -278,7 +278,7 @@
         created() {
             firebase.auth().onAuthStateChanged(user => {
                 if (user) {
-                    this.$store.dispatch('initialize', { user });
+                    this.$store.dispatch('initialize');
                 } else {
                     this.$store.dispatch('clear');
                 }

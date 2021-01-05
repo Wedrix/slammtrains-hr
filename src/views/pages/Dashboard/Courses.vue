@@ -64,7 +64,7 @@
                     },
                     {
                         title: 'Request A Course',
-                        icon: 'mdi-clipboard-arrow-down-outline',
+                        icon: 'mdi-plus',
                         to: '/dashboard/courses/request',
                     },
                 ];

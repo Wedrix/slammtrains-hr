@@ -1,5 +1,8 @@
 <template>
     <v-card
+        outlined
+        elevation="1"
+        color="white"
         class="rounded-lg">
             <v-img
                 :src="course.thumbnail.src"
@@ -38,7 +41,7 @@
                     <v-chip
                         class="label mt-2"
                         color="white"
-                        text-color="primary"
+                        text-color="secondary"
                         label
                         small
                         :style="{ 'visibility': label ? 'visible' : 'hidden' }">
@@ -84,24 +87,23 @@
                 return courseModuleCount;
             },
             isNew() {
-                return moment().isBefore(moment(this.course.createdAt).add(30,'days'));
-            }
+                if (this.settings.daysToOld) {
+                    return moment().isBefore(moment(this.course.createdAt).add(this.settings.daysToOld,'days'));
+                }
+
+                return false;
+            },
+            settings() {
+                return this.$store.state.settings.course;
+            },
         },
         methods: {
             computeCourseModuleDurationInSeconds(courseModule) {
                 const durationInSeconds = (courseModule.lessons.reduce((total, currentModule) => {
-                                            return total + (currentModule.durationInMinutes * 60);
-                                        }, 0))
-                            + this.computeTestDurationInSeconds(courseModule.test);
+                                            return total + currentModule.durationInSeconds;
+                                        }, 0));
 
-                return Math.ceil(durationInSeconds);
-            },
-            computeTestDurationInSeconds(test) {
-                const durationInSeconds = test.questions.reduce((total, currentQuestion) => {
-                                            return total + currentQuestion.durationInSeconds;
-                                        }, 0);
-
-                return Math.ceil(durationInSeconds);
+                return durationInSeconds;
             },
             formatDate(timestamp) {
                 return moment(timestamp).format("DD/MM/YY");

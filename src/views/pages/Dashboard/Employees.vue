@@ -57,6 +57,16 @@
                         icon: 'mdi-format-list-bulleted',
                         to: '/dashboard/employees',
                     },
+                    {
+                        title: 'Import Employees',
+                        icon: 'mdi-clipboard-arrow-down-outline',
+                        to: '/dashboard/employees/import',
+                    },
+                    {
+                        title: 'Add Employee',
+                        icon: 'mdi-plus',
+                        to: '/dashboard/employees/add',
+                    },
                 ];
             }
         }
