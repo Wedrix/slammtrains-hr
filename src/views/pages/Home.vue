@@ -20,7 +20,7 @@
                                     :key="`navigation-link-${key}`"
                                     :to="link.to"
                                     style="text-decoration:none;"
-                                    class="px-4">
+                                    class="px-4 white--text">
                                         {{ link.text }}
                                 </router-link>
                             </div>
@@ -28,7 +28,7 @@
                                 <router-link
                                     to="/signin"
                                     style="text-decoration:none;"
-                                    class="px-6">
+                                    class="px-6 white--text">
                                         Sign In
                                 </router-link>
                                 <v-btn to="/signup" rounded depressed color="accent" large>Try A Free Course</v-btn>
