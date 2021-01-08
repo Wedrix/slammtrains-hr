@@ -100,7 +100,7 @@
             <v-menu left bottom>
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn class="ml-2" color="secondary" fab :elevation="0" small v-bind="attrs" v-on="on">
-                        {{ getInitials(hr.name) }}
+                        {{ getInitials(`${hr.firstName} ${hr.lastName}`) }}
                     </v-btn>
                 </template>
 
@@ -152,7 +152,7 @@
         </v-main>
 
         <v-footer app inset color="white" flat style="border-top: thin solid rgba(0, 0, 0, 0.12) !important;">
-            <div class="text-caption">&#169;2020 Slamm Technologies</div>
+            <div class="text-caption">&#169;{{ year }} {{ settings.business.legalName }} All rights reserved.</div>
         </v-footer>
     </v-app>
 </template>
@@ -214,13 +214,17 @@
         computed: {
             ...mapState([
                 'company',
+                'settings',
             ]),
             ...mapGetters([
                 'hr',
                 'subscriptionHasExpired',
                 'planNotSet',
                 'unsubscribed',
-            ])
+            ]),
+            year() {
+                return new Date().getFullYear();
+            }
         },
         watch: {
             $route: {
@@ -251,17 +255,8 @@
             }
         },
         methods: {
-            async logout() {
-                try {
-                    await firebase.auth().signOut();
-                } catch (error) {
-                    const notification = {
-                        message: error.message,
-                        context: 'error',
-                    };
-
-                    this.$store.commit('push_notification', { notification });
-                }
+            logout() {
+                firebase.auth().signOut();
             },
             getInitials(name) {
                 const names = name.split(' ');
@@ -276,9 +271,12 @@
             }
         },
         created() {
+            this.$store.dispatch('initializeSettings');
+            this.$store.dispatch('initializeDocumentCounters');
+
             firebase.auth().onAuthStateChanged(user => {
                 if (user) {
-                    this.$store.dispatch('initialize');
+                    this.$store.dispatch('initializeCompany');
                 } else {
                     this.$store.dispatch('clear');
                 }

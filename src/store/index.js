@@ -70,6 +70,10 @@ const init = {
   },
 };
 
+const match = (a, b) => {
+  return JSON.stringify(a) === JSON.stringify(b);
+};
+
 export default new Vuex.Store({
   state: cloneDeep(init),
   getters: {
@@ -138,24 +142,35 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    initialize: firestoreAction(async ({ bindFirestoreRef }) => {
-      const resolveHRCompany = firebase.functions()
-                                        .httpsCallable('resolveHRCompany');
+    initializeSettings: firestoreAction(async ({ bindFirestoreRef, state }) => {
+      if (match(state.settings, init.settings)) {
 
-      const company = (await resolveHRCompany()).data.company;
-      
-      const companyRef = firebase.firestore()
-                                .doc(`companies/${company.id}`);
+        const settingsRef = firebase.firestore()
+                                    .doc(`settings/index`);
+  
+        await bindFirestoreRef('settings', settingsRef, { wait: true });
+      }
+    }),
+    initializeCompany: firestoreAction(async ({ bindFirestoreRef, state }) => {
+      if (match(state.company, init.company)) {
+        const resolveHRCompany = firebase.functions()
+                                          .httpsCallable('resolveHRCompany');
+  
+        const company = (await resolveHRCompany()).data.company;
+        
+        const companyRef = firebase.firestore()
+                                  .doc(`companies/${company.id}`);
 
-      const settingsRef = firebase.firestore()
-                                  .doc(`settings/index`);
-
-      const documentCountersRef = firebase.firestore()
-                                          .doc('documentCounters/index');
-
-      await bindFirestoreRef('company', companyRef, { wait: true });
-      await bindFirestoreRef('settings', settingsRef, { wait: true });
-      await bindFirestoreRef('documentCounters', documentCountersRef, { wait: true });
+        await bindFirestoreRef('company', companyRef, { wait: true });
+      }
+    }),
+    initializeDocumentCounters: firestoreAction(async ({ bindFirestoreRef, state }) => {
+      if (match(state.documentCounters, init.documentCounters)) {
+        const documentCountersRef = firebase.firestore()
+                                            .doc('documentCounters/index');
+  
+        await bindFirestoreRef('documentCounters', documentCountersRef, { wait: true });
+      }
     }),
     clear({ commit }) {
       commit('clear_state');

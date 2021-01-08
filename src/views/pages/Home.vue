@@ -25,13 +25,20 @@
                                 </router-link>
                             </div>
                             <div class="d-none d-md-flex justify-space-between align-center ml-8">
-                                <router-link
-                                    to="/signin"
-                                    style="text-decoration:none;"
+                                <div
+                                    @click="$emit('toggle-auth')"
+                                    style="text-decoration:none;cursor:pointer;"
                                     class="px-6 white--text">
                                         Sign In
-                                </router-link>
-                                <v-btn to="/signup" rounded depressed color="accent" large>Try A Free Course</v-btn>
+                                </div>
+                                <v-btn 
+                                    rounded 
+                                    depressed 
+                                    color="accent" 
+                                    large
+                                    @click="$emit('toggle-auth')">
+                                        Try A Free Course
+                                </v-btn>
                             </div>
                         </v-app-bar>
 
@@ -54,7 +61,14 @@
                                                         Professional courses that empower your employees to do more
                                                     </div>
                                                     <div class="pt-4">
-                                                        <v-btn to="/signup" rounded depressed color="accent" x-large>Try A Free Course</v-btn>
+                                                        <v-btn 
+                                                            rounded 
+                                                            depressed 
+                                                            color="accent"
+                                                            @click="$emit('toggle-auth')"
+                                                            x-large>
+                                                                Try A Free Course
+                                                        </v-btn>
                                                     </div>
                                                 </div>
                                             </v-col>
@@ -218,7 +232,14 @@
                                 Empower your employees to do more.
                             </div>
                             <div class="d-flex justify-center">
-                                <v-btn to="/signup" rounded depressed color="secondary" x-large>Sign Up For Free</v-btn>
+                                <v-btn 
+                                    rounded 
+                                    depressed 
+                                    color="secondary" 
+                                    x-large
+                                    @click="$emit('toggle-auth')">
+                                        Sign Up For Free
+                                </v-btn>
                             </div>
                         </div>
                     </div>

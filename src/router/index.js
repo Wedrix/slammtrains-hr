@@ -7,85 +7,69 @@ import PlainLayout from '@/views/layouts/Plain.vue';
 
 import firebase from '@/firebase';
 import 'firebase/auth';
-import 'firebase/firestore';
 
 Vue.use(VueRouter);
 
-const authValidation = (to, from, next) => {
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      next('/');
-    } else {
-      next();
-    }
-  });
-};
-
-const registerValidation = (to, from, next) => {
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      next();
-    } else {
-      next('/');
-    }
-  });
-};
-
-const authRoutes = [
-  {
-    path: '/signin',
-    name: 'SignInPage',
-    component: () => import('@/views/pages/SignIn.vue'),
-    beforeEnter: authValidation
-  },
-  {
-    path: '/signup',
-    name: 'SignUpPage',
-    component: () => import('@/views/pages/SignUp.vue'),
-    beforeEnter: authValidation
-  },
-  {
-    path: '/register_company',
-    name: 'CompanyRegistrationPage',
-    component: () => import('@/views/pages/RegisterCompany.vue'),
-    beforeEnter: registerValidation
-  },
-  {
-    path: '/confirm_email',
-    name: 'ConfirmEmailPage',
-    component: () => import('@/views/pages/ConfirmEmail.vue'),
-    beforeEnter: (to, from, next) => {
-      firebase.auth().onAuthStateChanged(user => {
+const makeGuard = (guardType) => {
+  return (to, from, next) => {
+    firebase.auth().onAuthStateChanged(async user => {
+      if (guardType === 'guest') {
         if (user) {
-          if (user.emailVerified) {
-            next('/dashboard');
-
-            return;
-          } else {
-            // Poll for changed state and redirect
-            const timer = setInterval(async () => {
-                await firebase.auth().currentUser.reload();
-  
-                if (user.emailVerified) {
-                  clearInterval(timer);
-                  
-                  next('/dashboard');
-                }
-            }, 5000);
-  
-            setTimeout(() => {
-                clearInterval(timer);
-            }, 900000);
-          }
-
+          next('/dashboard');
+        }
+        else {
           next();
-        } else {
+        }
+      }
+
+      if (guardType === 'authenticated') {
+        if (user) {
+          next();
+        }
+        else {
           next('/');
         }
-      });
-    }
-  }
-];
+      }
+
+      if (guardType === 'registered') {
+        if (user) {
+          const idToken = await user.getIdTokenResult();
+
+          const accessLevel = idToken.claims.accessLevel;
+
+          if (accessLevel === 'hr') {
+            next();
+          } 
+          else if (accessLevel === undefined) {
+            next('/auth/register');
+          }
+          else {
+            next('/auth/unauthorized');
+          }
+        } 
+        else {
+          next('/');
+        }
+      }
+
+      if (guardType === 'unregistered') {
+        if (user) {
+          const idToken = await user.getIdTokenResult();
+
+          if (idToken.claims.accessLevel === undefined) {
+            next();
+          }
+          else {
+            next('/dashboard');
+          }
+        } 
+        else {
+          next('/');
+        }
+      }
+    });
+  };
+};
 
 const dashboardRoutes = [
   {
@@ -153,41 +137,22 @@ const dashboardRoutes = [
   }
 ];
 
-const dashboardValidation = (to, from, next) => {
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      user.getIdTokenResult().then(async result => {
-        if (result.claims.accessLevel === 'hr') {
-          if (!user.emailVerified) {
-            next('/confirm_email');
+const authRoutes = [
+  {
+    path: 'register',
+    name: 'RegistrationPage',
+    component: () => import('@/views/pages/Auth/RegisterCompany.vue'),
+    beforeEnter: makeGuard('unregistered'),
+  },
+  {
+    path: 'unauthorized',
+    name: 'UnauthorizedPage',
+    component: () => import('@/views/pages/Auth/Unauthorized.vue'),
+    beforeEnter: makeGuard('authenticated'),
+  },
+];
 
-            return;
-          }
-
-          const company = (await firebase.firestore()
-                                        .collection('companies')
-                                        .where('hr.uid','==',user.uid)
-                                        .get())
-                                        .docs[0];
-          
-          if (!company) {
-            next('/register_company');
-
-            return;
-          }
-
-          next();
-        } else {
-          next({path: '/signin', query: { unauthorized: true }});
-        }
-      });
-    } else {
-      next('/signin');
-    }
-  });
-};
-
-const defaultRoutes = [
+const guestRoutes = [
   {
     path: '/',
     name: 'HomePage',
@@ -195,33 +160,23 @@ const defaultRoutes = [
   }
 ];
 
-const defaultValidation = (to, from, next) => {
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-      next('/dashboard');
-    } else {
-      next();
-    }
-  });
-};
-
 const routes = [
+  {
+    path: '/dashboard',
+    component: DashboardLayout,
+    children: dashboardRoutes,
+    beforeEnter: makeGuard('registered'),
+  },
   {
     path: '/auth',
     component: PlainLayout,
     children: authRoutes,
   },
   {
-    path: '/dashboard',
-    component: DashboardLayout,
-    children: dashboardRoutes,
-    beforeEnter: dashboardValidation,
-  },
-  {
     path: '/',
     component: DefaultLayout,
-    children: defaultRoutes,
-    beforeEnter: defaultValidation
+    children: guestRoutes,
+    beforeEnter: makeGuard('guest'),
   }
 ];
 
