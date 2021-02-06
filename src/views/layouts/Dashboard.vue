@@ -158,7 +158,6 @@
 </template>
 
 <script>
-    import moment from 'moment';
     import firebase from '@/firebase';
     import 'firebase/auth';
 

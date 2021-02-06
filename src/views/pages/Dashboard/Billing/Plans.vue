@@ -68,7 +68,7 @@
                                     </div>
 
                                     <div 
-                                        v-if="unsubscribed">
+                                        v-if="unsubscribed || subscriptionHasExpired || subscriptionShouldBeRenewed">
                                             <v-btn 
                                                 color="accent" 
                                                 block 
