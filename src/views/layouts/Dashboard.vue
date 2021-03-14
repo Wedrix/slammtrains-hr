@@ -4,9 +4,13 @@
             v-model="isShowingNavDrawer"
             app>
                 <v-list>
-                    <v-list-item>
+                    <v-list-item style="height:63px;">
                         <v-list-item-avatar tile>
-                            <v-img v-if="company.logo" :src="company.logo.src"/>
+                            <v-avatar v-if="company.logo"
+                                size="40"
+                                tile>
+                                    <img :src="company.logo.src"/>
+                            </v-avatar>
                             <v-avatar v-else color="primary">
                                 {{ getInitials(company.name) }}
                             </v-avatar>
